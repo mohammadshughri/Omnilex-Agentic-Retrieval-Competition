@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Omnilex Project — Teammate Onboarding</title>
+  <style>
+    /* ── Variables & Reset ─────────────────────────────────────────────── */
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-code: #1e2430;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-orange: #d29922;
+      --accent-red: #f85149;
+      --radius: 6px;
+      --nav-height: 56px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Sticky Nav ────────────────────────────────────────────────────── */
+    #main-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--nav-height);
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 16px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    #main-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 10px;
+      border-radius: var(--radius);
+      transition: color 0.15s, background 0.15s;
+    }
+    #main-nav a:hover { color: var(--text); background: var(--bg-card); }
+    #main-nav a.active { color: var(--accent); background: rgba(88,166,255,0.1); }
+
+    /* ── Layout ────────────────────────────────────────────────────────── */
+    main { padding: 0 16px 80px; }
+    section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 0 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-child { border-bottom: none; }
+    h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; line-height: 1.2; }
+    h2 { font-size: 1.4rem; font-weight: 600; margin: 32px 0 12px; color: var(--text); }
+    h3 { font-size: 0.8rem; font-weight: 600; margin: 20px 0 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    p { margin-bottom: 12px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul, ol { padding-left: 22px; margin-bottom: 12px; }
+    li { margin-bottom: 4px; }
+
+    /* ── Cards ─────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 12px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Callouts ───────────────────────────────────────────────────────── */
+    .callout {
+      background: var(--bg-card);
+      border: 1px solid var(--accent-orange);
+      border-left-width: 4px;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+    .callout.info { border-color: var(--accent); border-left-color: var(--accent); }
+    .callout.success { border-color: var(--accent-green); border-left-color: var(--accent-green); }
+
+    /* ── Concept Cards (details/summary) ─────────────────────────────── */
+    details.concept {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    details.concept summary {
+      padding: 14px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+    details.concept summary::-webkit-details-marker { display: none; }
+    details.concept summary::before {
+      content: "▶";
+      font-size: 0.65rem;
+      color: var(--accent);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    details.concept[open] summary::before { transform: rotate(90deg); }
+    details.concept .detail-body {
+      padding: 0 18px 16px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    details.concept .detail-body p { margin-top: 12px; }
+    details.concept .detail-body code { background: var(--bg-code); padding: 1px 5px; border-radius: 3px; font-size: 0.85em; color: var(--text); }
+
+    /* ── Code Blocks ───────────────────────────────────────────────────── */
+    .code-block {
+      position: relative;
+      margin: 16px 0;
+    }
+    .code-block pre {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+    }
+    .code-block .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      font-size: 11px;
+      padding: 3px 9px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .code-block .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background: var(--bg-code);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.88em;
+    }
+
+    /* ── Tables ────────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 16px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    thead th {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    tbody tr:nth-child(even) { background: rgba(22,27,34,0.6); }
+    tbody td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(48,54,61,0.5);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    /* ── Badges ────────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .badge-new { background: rgba(63,185,80,0.15); color: var(--accent-green); border: 1px solid rgba(63,185,80,0.4); }
+    .badge-warn { background: rgba(210,153,34,0.15); color: var(--accent-orange); border: 1px solid rgba(210,153,34,0.4); }
+    .badge-active { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.4); }
+
+    /* ── Checklist ──────────────────────────────────────────────────────── */
+    .checklist { list-style: none; padding: 0; }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(48,54,61,0.4);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(88,166,255,0.12);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    /* ── Timeline ───────────────────────────────────────────────────────── */
+    .timeline {
+      display: flex;
+      align-items: flex-start;
+      gap: 0;
+      margin: 24px 0;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .timeline-item {
+      flex: 1;
+      min-width: 110px;
+      text-align: center;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      top: 13px;
+      left: 50%;
+      right: calc(-50%);
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
+    }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      margin: 0 auto 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      position: relative;
+      z-index: 1;
+    }
+    .timeline-dot.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+    .timeline-label { font-size: 0.72rem; color: var(--text); line-height: 1.3; font-weight: 500; }
+    .timeline-date { font-size: 0.63rem; color: var(--text-muted); margin-top: 3px; }
+
+    /* ── File Tree ──────────────────────────────────────────────────────── */
+    .file-tree {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12.5px;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .file-tree .hl-new { color: var(--accent-green); }
+    .file-tree .hl-god { color: var(--accent-orange); }
+    .file-tree .hl-muted { color: var(--text-muted); }
+
+    /* ── Pipeline Diagram ───────────────────────────────────────────────── */
+    .pipeline {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .pipeline .hl-blue { color: var(--accent); }
+    .pipeline .hl-green { color: var(--accent-green); }
+    .pipeline .hl-orange { color: var(--accent-orange); }
+    .pipeline .hl-muted { color: var(--text-muted); }
+
+    /* ── Quick Links ─────────────────────────────────────────────────────── */
+    .quick-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+    .quick-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .quick-link:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+    /* ── Hero ─────────────────────────────────────────────────────────── */
+    .hero-subtitle { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 4px; }
+    .hero-goal {
+      background: rgba(88,166,255,0.07);
+      border: 1px solid rgba(88,166,255,0.25);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin: 20px 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .section-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navigation ──────────────────────────────────────────────────────── -->
+<nav id="main-nav">
+  <a href="#overview">Overview</a>
+  <a href="#problem">The Problem</a>
+  <a href="#concepts">Concepts</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#setup">Setup</a>
+  <a href="#structure">Structure</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#team">Team</a>
+  <a href="#rules">Rules</a>
+  <a href="#glossary">Glossary</a>
+  <a href="#references">References</a>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 1 — HERO / OVERVIEW
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="overview">
+  <span class="section-tag">01 — Overview</span>
+  <h1>Omnilex Legal Retrieval</h1>
+  <p class="hero-subtitle">LUH Agentic AI Course · Semester 6 · Apr 30 – Jul 16, 2026 · Team of 3</p>
+  <p class="hero-subtitle">First milestone: <strong style="color:var(--accent-orange)">May 21, 2026</strong> — progress presentation</p>
+
+  <div class="hero-goal">
+    <strong>Goal:</strong> Given an English legal query, retrieve the correct set of Swiss law citations
+    from two corpora — 176K federal law articles + 2.4M court decisions.
+    Primary metric: <strong>Macro F1</strong>.
+    <br><br>
+    <strong>Core challenge:</strong> Queries are English; corpus is German/French/Italian.
+    This is a <strong>zero-shot cross-lingual retrieval problem</strong> — BM25 alone fails.
+  </div>
+
+  <!-- First Day Checklist -->
+  <h2>First Day Checklist</h2>
+  <div class="card">
+    <ol class="checklist">
+      <li><span class="check-num">1</span><div>Clone the repo and <code>cd Omnilex-Agentic-Retrieval-Competition</code> (see <a href="#setup">Setup</a>)</div></li>
+      <li><span class="check-num">2</span><div>Run <code>uv venv .venv &amp;&amp; uv pip install -r requirements.txt &amp;&amp; uv pip install -e .</code></div></li>
+      <li><span class="check-num">3</span><div>Run <code>pytest</code> — all tests should pass</div></li>
+      <li><span class="check-num">4</span><div>Read <a href="#problem">The Problem</a> — understand the cross-lingual gap</div></li>
+      <li><span class="check-num">5</span><div>Read <a href="#concepts">Key Concepts</a> — especially BM25, Dense Embeddings, and RRF</div></li>
+      <li><span class="check-num">6</span><div>Pick a Week 1-2 task from <a href="#team">Team &amp; Tasks</a></div></li>
+      <li><span class="check-num">7</span><div>Read the <a href="#rules">Rules</a> section before writing any code</div></li>
+    </ol>
+  </div>
+
+  <!-- Quick Links -->
+  <h2>Quick Links</h2>
+  <div class="quick-links">
+    <a class="quick-link" href="https://www.kaggle.com/competitions/llm-agentic-legal-information-retrieval" target="_blank" rel="noopener">
+      🏆 Kaggle Competition
+    </a>
+    <a class="quick-link" href="superpowers/specs/2026-05-17-implementation-strategy-design.md" target="_blank">
+      📋 Implementation Strategy
+    </a>
+    <a class="quick-link" href="superpowers/specs/2026-05-17-architecture-review-findings-for-claude.md" target="_blank">
+      🔍 Architecture Review
+    </a>
+    <a class="quick-link" href="https://medium.com/@robertdennyson/dense-vs-sparse-vs-hybrid-rrf-which-rag-technique-actually-works-1228c0ae3f69" target="_blank" rel="noopener">
+      📖 Dense vs Sparse vs Hybrid (RRF)
+    </a>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 2 — THE PROBLEM
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="problem">
+  <span class="section-tag">02 — The Problem</span>
+  <h1>The Cross-Lingual Gap</h1>
+
+  <p>
+    Training queries are <strong>German</strong>. Validation and test queries are <strong>English</strong>.
+    The entire corpus — 176K law articles and 2.4M court decisions — is
+    <strong>German/French/Italian</strong>.
+  </p>
+
+  <div class="callout" style="border-color: var(--accent-red); border-left-color: var(--accent-red);">
+    <strong>Why BM25 fails:</strong> BM25 scores documents by word overlap. English <em>"detention"</em>
+    has zero overlap with German <em>"Haft"</em>. For conceptual queries with no explicit article numbers,
+    BM25 returns nothing useful. Our baseline Macro F1 on English queries via BM25: approximately <strong>0.02</strong>.
+  </div>
+
+  <h2>Data Files</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Language</th><th>Rows</th><th>Role</th></tr></thead>
+      <tbody>
+        <tr><td><code>train.csv</code></td><td>German queries</td><td>1,139</td><td>Gold labels — but different language from test. Cannot directly use for cross-lingual tuning.</td></tr>
+        <tr><td><code>val.csv</code></td><td>English queries</td><td>10</td><td>Our only English eval signal — treat as holdout; do not over-tune against it.</td></tr>
+        <tr><td><code>test.csv</code></td><td>English queries</td><td>40</td><td>Kaggle test set (no labels). 20 public / 20 private.</td></tr>
+        <tr><td><code>laws_de.csv</code></td><td>99% German</td><td>175,933</td><td>Federal law articles, ~242 chars each. All <code>Art.</code> prefix.</td></tr>
+        <tr><td><code>court_considerations.csv</code></td><td>61% DE / 32% FR / 6% IT</td><td>~2.4M</td><td>Swiss Federal Court decisions, ~1,105 chars each. All <code>BGE</code> prefix.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Citation Count Distribution</h2>
+  <p>
+    Per train query: <strong>mean 4.1</strong>, <strong>median 2</strong>, max 44.
+    Highly skewed — most queries need 1–3 citations, some need many.
+    Predicting the right <em>number</em> of citations matters as much as which ones.
+    This drives our <strong>dynamic K / score threshold</strong> design.
+  </p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3>70% of gold labels</h3>
+      <p style="font-size:2rem; font-weight:700; color:var(--accent); margin:4px 0">Laws</p>
+      <p style="color:var(--text-muted); font-size:0.9rem"><code>Art.</code> prefix — federal law articles from <code>laws_de.csv</code></p>
+    </div>
+    <div class="card">
+      <h3>30% of gold labels</h3>
+      <p style="font-size:2rem; font-weight:700; color:var(--accent-orange); margin:4px 0">Courts</p>
+      <p style="color:var(--text-muted); font-size:0.9rem"><code>BGE</code> prefix — court decisions from <code>court_considerations.csv</code></p>
+    </div>
+    <div class="card">
+      <h3>Metric</h3>
+      <p style="font-size:2rem; font-weight:700; color:var(--accent-green); margin:4px 0">Macro F1</p>
+      <p style="color:var(--text-muted); font-size:0.9rem">Average F1 per query — all queries weighted equally regardless of citation count</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 3 — KEY CONCEPTS
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="concepts">
+  <span class="section-tag">03 — Key Concepts</span>
+  <h1>Key Concepts</h1>
+  <p style="color:var(--text-muted); margin-bottom:20px">Click any concept to expand the full explanation.</p>
+
+  <details class="concept">
+    <summary>BM25 — keyword ranking (the baseline we're replacing)</summary>
+    <div class="detail-body">
+      <p>BM25 (Best Match 25) is a classic TF-IDF-based ranking algorithm. It scores documents by counting how often query tokens appear in the document, normalized by document length. It's fast, interpretable, and works well monolingually.</p>
+      <p><strong>Why it fails here:</strong> BM25 relies on exact token overlap. English "detention" shares zero characters with German "Haft". For queries that describe a legal situation without mentioning article numbers, BM25 returns a score of 0 for most documents.</p>
+      <p><strong>Where BM25 still helps:</strong> Queries that explicitly mention Swiss law identifiers like <code>Art. 221 StPO</code> — those tokens appear literally in the corpus and BM25 finds exact matches. We use BM25 as an additional channel via RRF fusion for this reason.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>Dense Embeddings — semantic search across languages</summary>
+    <div class="detail-body">
+      <p>A transformer model encodes any text into a fixed-size vector (e.g., 1024 dimensions). Semantically similar texts — even in different languages — land near each other in this vector space.</p>
+      <p>We pre-compute embeddings for the entire corpus (176K laws + 2.4M court passages) and store them in a FAISS index. At query time, we embed the English question and retrieve the nearest vectors in milliseconds.</p>
+      <p><strong>Why this solves the cross-lingual gap:</strong> A model trained on multilingual data maps "detention" and "Haft" to similar locations in embedding space, even though they share no tokens.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>BGE-M3 — three retrieval signals from one model</summary>
+    <div class="detail-body">
+      <p><code>BAAI/bge-m3</code> is a 0.6B parameter model that produces <em>three complementary retrieval signals</em> from a single forward pass:</p>
+      <ul>
+        <li><strong>Dense embeddings</strong> (1024-dim) — semantic similarity, works cross-lingually</li>
+        <li><strong>Sparse neural weights</strong> — cross-lingual neural "BM25", no vocabulary mismatch</li>
+        <li><strong>ColBERT multi-vector</strong> — one vector per token per passage, precise but expensive (laws only)</li>
+      </ul>
+      <p>BGE-M3 fits on 8GB VRAM. It is our Week 1-2 retriever. Qwen3-Embedding-8B (MTEB #1 multilingual) is planned for Week 5-6.</p>
+      <p>We combine the three signals via RRF fusion — not weighted score addition. See the RRF concept card below for why.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>FAISS — fast approximate nearest-neighbor search at 2M+ scale</summary>
+    <div class="detail-body">
+      <p>FAISS (Facebook AI Similarity Search) is a library for efficient similarity search over dense vectors. Doing an exact nearest-neighbor search over 2.4M vectors naively would be too slow.</p>
+      <p>We use <code>IndexHNSWFlat</code> (Hierarchical Navigable Small World, M=32): ~98% recall vs. exact search, no training step required, query time in milliseconds.</p>
+      <p><strong>Memory estimates:</strong> Laws FAISS index ~500MB; Courts FAISS index ~7-8GB. The T4 on Kaggle has 16GB VRAM — we load laws to GPU and courts to CPU.</p>
+      <p>We build <em>two separate indices</em> (laws and courts) rather than one combined index — see the Architecture section for the reasoning.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>RRF — Reciprocal Rank Fusion (how we combine retrieval channels)</summary>
+    <div class="detail-body">
+      <p>RRF combines multiple ranked lists by position, not by score. Formula:</p>
+      <p style="font-family:monospace; background:var(--bg-code); padding:8px 12px; border-radius:4px; margin:10px 0">score(doc) = &sum; over each channel: 1 / (60 + rank_in_that_channel)</p>
+      <p><strong>Why not add scores directly?</strong> Dense, sparse, BM25, law, and court scores are on completely different numeric scales. Adding them directly produces nonsense rankings. RRF only uses the <em>rank position</em>, which is always 1-to-N and directly comparable.</p>
+      <p>RRF was adopted after an architecture review rejected an earlier weighted-score approach. Do not reintroduce weighted scores without strong calibration evidence.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>HyDE — Hypothetical Document Embeddings (Week 4)</summary>
+    <div class="detail-body">
+      <p>Instead of embedding the English query directly, we use an LLM to generate a <em>hypothetical German law passage</em> that would answer the query, then embed that synthetic passage and search the corpus with it.</p>
+      <p><strong>Why this helps:</strong> The synthetic passage is in German (the corpus language) and uses legal terminology. Its embedding naturally lands near actual German law passages, bridging the cross-lingual gap without explicit translation.</p>
+      <p><strong>Limitations:</strong> If the LLM hallucinates incorrect article numbers in the synthetic passage, those wrong numbers pull retrieval toward wrong documents. We use the original English query embedding at the reranker step, not the synthetic passage.</p>
+      <p>HyDE is deferred to Week 4 — we want a stable dense retrieval baseline first.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>Macro F1 — the competition metric</summary>
+    <div class="detail-body">
+      <p>Macro F1 averages the F1 score <em>per query</em>, giving every query equal weight regardless of how many citations it has. F1 = 2 &times; (precision &times; recall) / (precision + recall).</p>
+      <p><strong>Implication for prediction:</strong> A query with 1 gold citation and a query with 44 gold citations contribute equally to the final score. Predicting too many citations hurts precision; predicting too few hurts recall. This is why <em>predicting the right number</em> of citations matters as much as which ones.</p>
+      <p><strong>Current top leaderboard score:</strong> 0.359. Our BM25 baseline on English queries: ~0.02. Target with BGE-M3 hybrid: 0.15–0.25.</p>
+    </div>
+  </details>
+
+  <details class="concept">
+    <summary>Reranker — precision over top-100 candidates (Week 3+)</summary>
+    <div class="detail-body">
+      <p>First-stage retrieval (FAISS) optimizes <em>recall</em> — get all relevant documents in the top-100. A reranker then optimizes <em>precision</em> — score each (query, document) pair carefully and reorder.</p>
+      <p>A reranker is a cross-encoder: it sees both the query and document at once (unlike a bi-encoder which embeds them independently). More accurate but 100&times; slower — so it runs on top-100, not the full 2M+ corpus.</p>
+      <p>We use <code>bge-reranker-v2-m3</code> in Week 3, then upgrade to <code>Qwen3-Reranker-8B</code> in Week 5-6. Note: Qwen3-Reranker must be loaded as a causal LM and scored via yes/no token logits — not a standard CrossEncoder API.</p>
+    </div>
+  </details>
+
+  <!-- Further Reading callout -->
+  <div class="callout info" style="margin-top: 28px;">
+    <strong>📖 Further Reading:</strong>
+    <a href="https://medium.com/@robertdennyson/dense-vs-sparse-vs-hybrid-rrf-which-rag-technique-actually-works-1228c0ae3f69"
+       target="_blank" rel="noopener">
+      Dense vs. Sparse vs. Hybrid + RRF — Which RAG Technique Actually Works?
+    </a>
+    <p style="margin-top:8px; color: var(--text-muted); font-size:0.9rem">
+      Practical comparison of the three retrieval modes and RRF fusion with real benchmark results.
+      Read this after the concept cards above to see how these techniques compare in practice.
+    </p>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 4 — ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="architecture">
+  <span class="section-tag">04 — Architecture</span>
+  <h1>Pipeline Architecture</h1>
+
+  <!-- Pipeline Diagram -->
+  <div class="pipeline"><span class="hl-blue">English Legal Query</span>
+    │
+    ├──► <span class="hl-orange">Citation Anchor Extractor</span>    ← regex: "Art. 221 StPO" found literally in query
+    │    └──► CitationNormalizer              ← canonical form (existing module)
+    │         └──► High-priority candidates (injected at rank 0 in fusion)
+    │
+    ├──► <span class="hl-blue">BGE-M3 Encoder</span> (0.6B params, BAAI/bge-m3)
+    │    ├── Dense embeddings (1024-dim)
+    │    ├── Sparse neural weights (cross-lingual lexical)
+    │    └── ColBERT tokens          ← laws only (175K); too expensive for 2.4M courts
+    │
+    ▼
+ <span class="hl-green">FAISS Index</span> (pre-built, loaded from disk)
+    ├── Laws Index   (175K passages)    ~500 MB
+    └── Courts Index (2.4M passages)   ~7-8 GB  [dense+sparse only]
+    │
+    ▼
+ Top-100 candidates per channel (dense / sparse / ColBERT each ranked independently)
+    │
+    ▼
+ <span class="hl-orange">RRF Fusion</span> (per corpus)
+ score = Σ 1/(60 + rank)              ← rank-based; no score-scale issues
+    │
+    ▼
+ Federated Law + Court Merge
+ deduplicate by normalized citation
+    │
+    ▼
+ <span class="hl-blue">Reranker: bge-reranker-v2-m3</span>         ← Week 3+
+    │
+    ▼
+ Dynamic K / Score Threshold          ← test k=2,3,5,10 vs threshold on val
+    │
+    ▼
+ <span class="hl-green">CitationNormalizer</span> → submission.csv</div>
+
+  <!-- Top 3 Gotchas -->
+  <div class="callout">
+    <strong>⚠️ Top 3 Silent Failure Modes</strong>
+    <ol style="margin-top: 10px; padding-left: 20px;">
+      <li style="margin-bottom:10px">
+        <strong>Weighted scores instead of RRF.</strong>
+        Dense, sparse, BM25, law, and court scores are on incompatible scales.
+        Adding them directly produces nonsense rankings. Always use RRF.
+      </li>
+      <li style="margin-bottom:10px">
+        <strong>Comparing raw citation strings without CitationNormalizer.</strong>
+        <code>"Art. 1 Abs. 1 ZGB"</code> and <code>"Art. 1 ZGB"</code> are the same citation but won't match as strings.
+        Always normalize before comparing. F1 silently underreports if you skip this.
+      </li>
+      <li>
+        <strong>Tuning hyperparameters against val.csv more than once.</strong>
+        val.csv has only 10 English queries. Repeated tuning is effectively memorization, not generalization.
+        Use it as a final sanity check, not an optimization target.
+      </li>
+    </ol>
+  </div>
+
+  <!-- Two separate indices -->
+  <h2>Why Two Separate Indices?</h2>
+  <div class="card-grid">
+    <div class="card">
+      <h3>Laws Index</h3>
+      <p>175K passages · ~500 MB · German only · Short snippets (~242 chars) · Build time: ~20 min</p>
+    </div>
+    <div class="card">
+      <h3>Courts Index</h3>
+      <p>2.4M passages · ~7-8 GB · DE/FR/IT · Long passages (~1,105 chars) · Build time: 4-8 hrs on GPU</p>
+    </div>
+  </div>
+  <p style="color:var(--text-muted)">
+    Separate indices allow failure isolation, different memory strategies (laws on GPU, courts on CPU),
+    and separate weighting matching the 70% laws / 30% courts split in gold labels.
+    ColBERT multi-vector is only applied to the laws corpus — 2.4M courts passages would exceed memory.
+  </p>
+
+  <!-- Architecture evolution -->
+  <div class="callout success">
+    <strong>Architecture Evolution: v1 → v2</strong><br><br>
+    <strong>v1 (rejected):</strong> Weighted score fusion: <code>0.4×dense + 0.2×sparse + 0.4×ColBERT</code>.
+    An architecture review found these scores are on incompatible numeric scales — adding them is undefined.<br><br>
+    <strong>v2 (current):</strong> RRF replaces weighted scores everywhere. Do not reintroduce score weighting
+    without calibration data showing it beats RRF on val.csv.
+  </div>
+
+  <!-- Model Pluggability -->
+  <h2>Model Pluggability</h2>
+  <p>All model calls go through protocol interfaces — swapping models requires only a new adapter class:</p>
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># EmbeddingModel protocol — encode_documents() / encode_queries()
+# BgeM3Embedder implements it (Week 1-2)
+# Qwen3Embedder will implement it (Week 5-6) — no retrieval code changes needed
+
+# RerankerModel protocol — rerank(query, docs)
+# BgeCrossEncoderReranker (Week 3)
+# Qwen3CausalLmReranker (Week 5-6)
+#   Note: Qwen3-Reranker uses yes/no token logits — NOT the standard CrossEncoder API</pre>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 5 — ENVIRONMENT SETUP
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="setup">
+  <span class="section-tag">05 — Setup</span>
+  <h1>Environment Setup</h1>
+
+  <div class="callout info">
+    <strong>Project rule:</strong> Always use <code>uv</code> — never plain <code>pip install</code>.
+    <code>uv</code> is faster, produces reproducible lockfiles, and is the team convention.
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 1. Clone
+git clone https://github.com/mohammadshughri/Omnilex-Agentic-Retrieval-Competition.git
+cd Omnilex-Agentic-Retrieval-Competition</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 2. Create virtual environment with uv (NOT pip)
+uv venv .venv</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 3. Activate
+source .venv/bin/activate        # Linux / macOS / WSL
+# .venv\Scripts\activate         # Windows PowerShell</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 4. Install dependencies
+uv pip install -r requirements.txt
+uv pip install -r requirements-dev.txt</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 5. Install the omnilex package in dev mode
+uv pip install -e .</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 6. Download data (Kaggle credentials required)
+python utils/download_data.py</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 7. Build BM25 indices (baseline)
+python utils/build_indices.py</pre>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># 8. Verify — all tests should pass
+pytest</pre>
+  </div>
+
+  <h2>Common Errors</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Error</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td><code>ModuleNotFoundError: omnilex</code></td><td>Run <code>uv pip install -e .</code> from the repo root</td></tr>
+        <tr><td><code>FileNotFoundError: laws_de.csv</code></td><td>Download from Kaggle → place in <code>data/raw/swiss_citations/</code></td></tr>
+        <tr><td><code>pickle.UnpicklingError</code></td><td>Rebuild indices: <code>python utils/build_indices.py</code></td></tr>
+        <tr><td><code>CUDA out of memory</code></td><td>Reduce batch size in the embed script; add <code>--device cpu</code> flag</td></tr>
+        <tr><td>Tests fail with <code>CitationNormalizer</code> errors</td><td>Verify <code>data/abbrev-translations.json</code> exists in the repo</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># Local evaluation against val.csv
+python -c "
+from omnilex.evaluation.scorer import Scorer
+s = Scorer()
+print(s.score('submission.csv', 'data/raw/lexam/val.csv'))
+"</pre>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 6 — PROJECT STRUCTURE
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="structure">
+  <span class="section-tag">06 — Project Structure</span>
+  <h1>Project Structure</h1>
+  <p style="margin-bottom:16px">
+    <span class="badge badge-new">★ NEW</span> marks files being added in Week 1-3. &nbsp;
+    <span class="badge badge-warn">GOD NODE</span> marks the central module called everywhere.
+  </p>
+
+  <div class="file-tree">Omnilex-Agentic-Retrieval-Competition/
+├── src/omnilex/
+│   ├── citations/
+│   │   ├── normalizer.py      <span class="hl-god">★ GOD NODE</span> <span class="hl-muted">— called everywhere; Art. + BGE parser</span>
+│   │   ├── abbreviations.py   <span class="hl-muted">— 4,362 Swiss law abbreviations (DE/FR/IT)</span>
+│   │   └── types.py           <span class="hl-muted">— Citation dataclass, CitationType enum</span>
+│   ├── evaluation/
+│   │   ├── metrics.py         <span class="hl-muted">— macro_f1, micro_f1, MAP, NDCG@k</span>
+│   │   └── scorer.py          <span class="hl-muted">— load CSVs, normalize, compute metrics</span>
+│   ├── retrieval/
+│   │   ├── bm25_index.py      <span class="hl-muted">— existing BM25 baseline (rank-bm25 wrapper)</span>
+│   │   ├── tools.py           <span class="hl-muted">— LLM-compatible tool wrappers (ReAct agent)</span>
+│   │   ├── models.py          <span class="hl-new">★ NEW</span> <span class="hl-muted">— EmbeddingModel / RerankerModel protocols</span>
+│   │   ├── dense_index.py     <span class="hl-new">★ NEW</span> <span class="hl-muted">— FAISS index builder (model-agnostic)</span>
+│   │   ├── dense_retriever.py <span class="hl-new">★ NEW</span> <span class="hl-muted">— query encoding + FAISS search</span>
+│   │   ├── fusion.py          <span class="hl-new">★ NEW</span> <span class="hl-muted">— RRF fusion + deduplication</span>
+│   │   ├── anchor_extractor.py<span class="hl-new">★ NEW</span> <span class="hl-muted">— citation-anchor extraction from query</span>
+│   │   └── submission.py      <span class="hl-new">★ NEW</span> <span class="hl-muted">— top-k → normalize → CSV</span>
+│   └── llm/
+│       ├── loader.py          <span class="hl-muted">— llama-cpp-python wrapper + GPU auto-detect</span>
+│       └── prompts.py         <span class="hl-muted">— ReAct agent prompt templates</span>
+├── scripts/
+│   ├── embed_corpus.py        <span class="hl-new">★ NEW</span> <span class="hl-muted">— SLURM batch embedding with checkpoints</span>
+│   └── run_evaluation.py      <span class="hl-new">★ NEW</span> <span class="hl-muted">— comparison evaluation harness</span>
+├── notebooks/
+│   ├── 01_direct_generation_baseline.ipynb
+│   └── 02_agentic_retrieval_baseline.ipynb
+├── data/
+│   ├── raw/lexam/             <span class="hl-muted">— train.csv, val.csv, test.csv (gitignored)</span>
+│   ├── raw/swiss_citations/   <span class="hl-muted">— laws_de.csv, court_considerations.csv (gitignored)</span>
+│   └── processed/bge_m3/      <span class="hl-new">★ NEW</span> <span class="hl-muted">— embeddings + FAISS indices (~15GB, gitignored)</span>
+│       ├── laws_dense.npy / laws_faiss.index / laws_metadata.jsonl
+│       └── courts_dense.npy / courts_faiss.index / courts_metadata.jsonl
+├── results/                   <span class="hl-muted">— JSON evaluation outputs</span>
+└── tests/                     <span class="hl-muted">— pytest test suite</span></div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 7 — ROADMAP
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+  <span class="section-tag">07 — Roadmap</span>
+  <h1>Project Roadmap</h1>
+
+  <!-- Horizontal Timeline -->
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot active">W1-3</div>
+      <div class="timeline-label">BGE-M3<br>Hybrid</div>
+      <div class="timeline-date">Apr 30–May 21</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">W3</div>
+      <div class="timeline-label">Add<br>Reranker</div>
+      <div class="timeline-date">May 22–28</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">W4</div>
+      <div class="timeline-label">HyDE</div>
+      <div class="timeline-date">May 29–Jun 4</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">W5-6</div>
+      <div class="timeline-label">Qwen3-8B<br>Cluster</div>
+      <div class="timeline-date">Jun 5–18</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">W7</div>
+      <div class="timeline-label">Dynamic K<br>+ Routing</div>
+      <div class="timeline-date">Jun 19–25</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot">W8</div>
+      <div class="timeline-label">Final<br>Polish</div>
+      <div class="timeline-date">Jun 26–Jul 16</div>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Week</th><th>Dates</th><th>Goal</th><th>Key Deliverable</th><th>Est. Macro F1</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-active">1-3 ← NOW</span></td>
+          <td>Apr 30–May 21</td>
+          <td>BGE-M3 hybrid retrieval end-to-end</td>
+          <td>Presentation: BM25 vs BGE-M3 F1 comparison</td>
+          <td>0.15–0.25</td>
+        </tr>
+        <tr>
+          <td>W3</td>
+          <td>May 22–28</td>
+          <td>Add reranker (bge-reranker-v2-m3)</td>
+          <td>Ablation: dense vs hybrid vs hybrid+rerank</td>
+          <td>+0.03–0.05</td>
+        </tr>
+        <tr>
+          <td>W4</td>
+          <td>May 29–Jun 4</td>
+          <td>Add HyDE</td>
+          <td>Compare with/without HyDE on conceptual queries</td>
+          <td>+0.02–0.05</td>
+        </tr>
+        <tr>
+          <td>W5-6</td>
+          <td>Jun 5–18</td>
+          <td>Upgrade to Qwen3-8B on GWDG/KISSKI cluster</td>
+          <td>BGE-M3 vs Qwen3-8B head-to-head comparison</td>
+          <td>0.20–0.30</td>
+        </tr>
+        <tr>
+          <td>W7</td>
+          <td>Jun 19–25</td>
+          <td>Dynamic K + query routing</td>
+          <td>Calibrated threshold; lexical vs. conceptual routing</td>
+          <td>varies</td>
+        </tr>
+        <tr>
+          <td>W8</td>
+          <td>Jun 26–Jul 16</td>
+          <td>Final polish + ablation study</td>
+          <td>Full ablation table + pipeline diagram</td>
+          <td>target: 0.30+</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="color:var(--text-muted); font-size:0.9rem; margin-top:8px">BM25 baseline (English queries, no translation): ~0.02 · Top leaderboard score: 0.359</p>
+
+  <h2>May 21 Presentation Outline</h2>
+  <div class="card">
+    <ol style="padding-left:20px; line-height:2">
+      <li>The problem: English queries vs German/French/Italian corpus (1 slide)</li>
+      <li>Why BM25 fails cross-lingually (1 slide)</li>
+      <li>Our approach: BGE-M3 hybrid retrieval (2 slides)</li>
+      <li>Results: BM25 vs BGE-M3 comparison table (1-2 slides)</li>
+      <li>Example: one query end-to-end walkthrough (1 slide)</li>
+      <li>Roadmap: reranker → HyDE → Qwen3 → calibration (1 slide)</li>
+    </ol>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 8 — TEAM & TASKS
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="team">
+  <span class="section-tag">08 — Team & Tasks</span>
+  <h1>Team &amp; Task Division</h1>
+  <p style="color:var(--text-muted); margin-bottom:20px">Week 1-2 parallel tracks (currently active):</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Person</th><th>Task</th><th>Depends On</th><th>Output</th><th>Est. Time</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Person A</strong></td>
+          <td>Embed <code>laws_de.csv</code> + build FAISS laws index</td>
+          <td>BGE-M3 downloaded</td>
+          <td><code>laws_dense.npy</code>, <code>laws_faiss.index</code>, <code>laws_metadata.jsonl</code></td>
+          <td>~20 min</td>
+        </tr>
+        <tr>
+          <td><strong>Person B</strong></td>
+          <td>Embed <code>court_considerations.csv</code> on SLURM cluster</td>
+          <td>BGE-M3 + SLURM account</td>
+          <td><code>courts_dense.npy</code>, <code>courts_faiss.index</code>, <code>courts_metadata.jsonl</code></td>
+          <td>4-8 hrs</td>
+        </tr>
+        <tr>
+          <td><strong>Person C</strong></td>
+          <td>Build query pipeline + evaluation harness</td>
+          <td>Person A's laws index</td>
+          <td><code>dense_retriever.py</code>, <code>run_evaluation.py</code>, first val F1 result</td>
+          <td>1-2 days</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout info">
+    <strong>Coordination note:</strong> Person A finishes first (~20 min) → helps Person C test the
+    laws-only pipeline while Person B's cluster job runs overnight.
+    Don't wait for the courts index — laws alone covers 70% of gold labels.
+  </div>
+
+  <h2>Before Launching the Courts Embedding Job (CRITICAL)</h2>
+  <p>The court embedding job takes 4-8 hours. A bad configuration wastes the entire run.</p>
+  <p>Run an acceptance test on 100 rows first:</p>
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre># Test on 100 rows before committing to the full 2.4M corpus
+python scripts/embed_corpus.py \
+  --input data/raw/swiss_citations/court_considerations.csv \
+  --output data/processed/bge_m3/courts_test \
+  --max-rows 100
+
+# Verify: CSV row id → FAISS id alignment, metadata lookup,
+# citation normalization, RRF determinism, submission validation
+pytest tests/test_retrieval/ -v</pre>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 9 — RULES
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="rules">
+  <span class="section-tag">09 — Rules</span>
+  <h1>Rules &amp; Conventions</h1>
+
+  <h2>Package Management</h2>
+  <div class="card">
+    <p>Always use <code>uv pip install</code> — never plain <code>pip install</code>. Reproducible lockfiles, faster resolution.</p>
+    <p style="margin-top:8px">Install the local package in dev mode: <code>uv pip install -e .</code></p>
+  </div>
+
+  <h2>Running Code</h2>
+  <div class="code-block">
+    <button class="copy-btn">Copy</button>
+    <pre>source .venv/bin/activate     # activate first
+pytest                         # run before pushing
+ruff check . &amp;&amp; ruff format . # lint before pushing</pre>
+  </div>
+
+  <h2>Evaluation Discipline</h2>
+  <div class="callout">
+    <strong>⚠️ val.csv has only 10 queries.</strong> Do NOT tune hyperparameters against it repeatedly.
+    Ten queries is statistically meaningless — repeated tuning is memorization, not generalization.
+    Use it as a final sanity check only. Report val.csv scores as "calibration check", not strong evidence.
+    Use train-derived diagnostics for iteration — but label them as German-query diagnostics (different language from test).
+  </div>
+
+  <h2>Data Rules</h2>
+  <ul>
+    <li>Never commit raw data — all data paths are gitignored</li>
+    <li><code>data/raw/</code> is read-only — never modify source files</li>
+    <li>Processed files (embeddings, FAISS indices) go in <code>data/processed/</code> (gitignored, ~15GB)</li>
+  </ul>
+
+  <h2>Artifact Safety</h2>
+  <div class="callout">
+    <strong>⚠️ Do NOT use pickle for shared or uploaded artifacts.</strong>
+    Use <code>.npy</code>, FAISS native format, or JSON instead.
+    The existing <code>laws_index.pkl</code> / <code>courts_index.pkl</code> are acceptable for local BM25 prototyping only.
+    Pickle is unsafe for untrusted artifacts and impractical at 2.4M passages.
+  </div>
+
+  <h2>Citation Normalization</h2>
+  <div class="card">
+    <p>Always pass raw citation strings through <code>CitationNormalizer</code> before comparing or submitting.</p>
+    <div class="code-block" style="margin:10px 0">
+      <button class="copy-btn">Copy</button>
+      <pre>from omnilex.citations.normalizer import CitationNormalizer
+normalizer = CitationNormalizer()
+# "Art. 1 Abs. 1 ZGB" → same normalized form as "Art. 1 ZGB"
+canonical = normalizer.normalize("Art. 1 Abs. 1 ZGB")</pre>
+    </div>
+    <p style="color:var(--text-muted); font-size:0.9rem">Never write alternative regex parsers for citations — <code>CitationNormalizer</code> is the single canonical parser.</p>
+  </div>
+
+  <h2>Do Not Reintroduce</h2>
+  <ul>
+    <li><strong>Raw weighted score fusion</strong> — use RRF instead; scores are not cross-scale comparable</li>
+    <li><strong>Hard-coded model paths</strong> — use the <code>EmbeddingModel</code> / <code>RerankerModel</code> protocol so Qwen3 is a clean swap-in</li>
+  </ul>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 10 — GLOSSARY
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="glossary">
+  <span class="section-tag">10 — Glossary</span>
+  <h1>Glossary</h1>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Art.</strong></td><td>"Artikel" — prefix for Swiss federal law citations (e.g., <code>Art. 221 Abs. 1 StPO</code>)</td></tr>
+        <tr><td><strong>BGE</strong></td><td>"Bundesgerichtsentscheid" — Swiss Federal Court leading decision (e.g., <code>BGE 116 Ia 56</code>)</td></tr>
+        <tr><td><strong>BM25</strong></td><td>TF-IDF-based keyword ranking; fails cross-lingually due to zero token overlap between English and German/French/Italian</td></tr>
+        <tr><td><strong>CitationNormalizer</strong></td><td>Canonical citation parser at <code>src/omnilex/citations/normalizer.py</code> — always use this before comparing citations</td></tr>
+        <tr><td><strong>ColBERT</strong></td><td>Multi-vector retrieval: one vector per token per passage; more precise than dense but memory-expensive</td></tr>
+        <tr><td><strong>Dense retrieval</strong></td><td>Embedding-based semantic search via FAISS — works cross-lingually</td></tr>
+        <tr><td><strong>Dynamic K</strong></td><td>Predicting how many citations to return per query (vs. a fixed top-k); critical for Macro F1</td></tr>
+        <tr><td><strong>FAISS</strong></td><td>Facebook AI Similarity Search — fast approximate nearest-neighbor over dense vectors</td></tr>
+        <tr><td><strong>FlagEmbedding</strong></td><td>Python library for BGE-M3 (dense + sparse + ColBERT in one API)</td></tr>
+        <tr><td><strong>HyDE</strong></td><td>Hypothetical Document Embeddings — generate a synthetic passage, embed that for retrieval; bridges cross-lingual gap</td></tr>
+        <tr><td><strong>IndexHNSWFlat</strong></td><td>FAISS index type: Hierarchical Navigable Small World, M=32; ~98% recall, no training needed</td></tr>
+        <tr><td><strong>Macro F1</strong></td><td>Competition metric: average F1 per query — all queries weighted equally regardless of citation count</td></tr>
+        <tr><td><strong>RRF</strong></td><td>Reciprocal Rank Fusion — rank-based fusion: <code>&sum; 1/(60 + rank)</code>; avoids score-scale incompatibility</td></tr>
+        <tr><td><strong>SLURM</strong></td><td>HPC job scheduler on the GWDG/KISSKI cluster — used for the 4-8 hr court embedding job</td></tr>
+        <tr><td><strong>Sparse retrieval</strong></td><td>BGE-M3 neural sparse weights — cross-lingual lexical matching without vocabulary mismatch</td></tr>
+        <tr><td><strong>uv</strong></td><td>Fast Python package manager used instead of pip; required by project rules</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SECTION 11 — REFERENCES
+═══════════════════════════════════════════════════════════════════════════ -->
+<section id="references">
+  <span class="section-tag">11 — References</span>
+  <h1>References &amp; Further Reading</h1>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Resource</th><th>What it teaches</th><th>Why relevant</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="https://medium.com/@robertdennyson/dense-vs-sparse-vs-hybrid-rrf-which-rag-technique-actually-works-1228c0ae3f69" target="_blank" rel="noopener">Dense vs. Sparse vs. Hybrid + RRF</a></td>
+          <td>Practical benchmark comparison of dense, sparse, and hybrid retrieval modes with RRF fusion</td>
+          <td>Directly maps to our retrieval architecture choices — read this to understand <em>why</em> we use hybrid + RRF instead of dense-only</td>
+        </tr>
+        <tr>
+          <td><a href="https://arxiv.org/abs/2309.07597" target="_blank" rel="noopener">BGE-M3 Paper (BAAI)</a></td>
+          <td>BGE-M3's multi-functionality: dense + sparse + ColBERT from one model</td>
+          <td>Explains the three retrieval channels we use in Week 1-2</td>
+        </tr>
+        <tr>
+          <td><a href="https://faiss.ai/" target="_blank" rel="noopener">FAISS Documentation</a></td>
+          <td>FAISS index types, memory tradeoffs, approximate vs. exact search</td>
+          <td>Reference for choosing IndexHNSWFlat vs. IVFPQ when memory is tight on Kaggle T4</td>
+        </tr>
+        <tr>
+          <td><a href="https://www.kaggle.com/competitions/llm-agentic-legal-information-retrieval" target="_blank" rel="noopener">Kaggle Competition Page</a></td>
+          <td>Competition rules, evaluation metric definition, leaderboard</td>
+          <td>Source of truth for submission format and Macro F1 scoring; check before every submission</td>
+        </tr>
+        <tr>
+          <td><a href="superpowers/specs/2026-05-17-implementation-strategy-design.md" target="_blank">Implementation Strategy Doc</a></td>
+          <td>Full week-by-week architecture spec with data flow and model choices</td>
+          <td>Go here for the detailed rationale behind every component decision in the pipeline</td>
+        </tr>
+        <tr>
+          <td><a href="superpowers/specs/2026-05-17-architecture-review-findings-for-claude.md" target="_blank">Architecture Review Doc</a></td>
+          <td>Critical review of the v1 design — what was wrong and why</td>
+          <td>Go here to understand why RRF replaced weighted scores and why reranking moved earlier in the pipeline</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:48px; padding-top:24px; border-top:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; text-align:center">
+    Omnilex Legal Retrieval · LUH Agentic AI Semester 6 · Last updated 2026-05-17
+  </div>
+</section>
+
+</main>
+
+<script>
+  /* ── Copy-to-clipboard ─────────────────────────────────────────────── */
+  document.querySelectorAll('.code-block').forEach(block => {
+    const btn = block.querySelector('.copy-btn');
+    const pre = block.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', () => {
+      const text = pre.textContent.trim();
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          btn.textContent = 'Copied!';
+          setTimeout(() => btn.textContent = 'Copy', 2000);
+        });
+      } else {
+        /* fallback for file:// contexts */
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      }
+    });
+  });
+
+  /* ── Active nav highlight on scroll ──────────────────────────────── */
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('#main-nav a');
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`#main-nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -75% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>

@@ -68,8 +68,7 @@ instance/
 # Scrapy stuff:
 .scrapy
 
-# Documentation (hosted on Kaggle)
-docs/
+
 
 # PyBuilder
 .pybuilder/

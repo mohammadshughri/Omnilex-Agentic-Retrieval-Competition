@@ -47,3 +47,35 @@ class TestRerankerModel:
         model = FakeReranker()
         scores = model.score_pairs("query", ["doc1", "doc2", "doc3"])
         assert scores.shape == (3,)
+
+
+import pytest
+
+
+class TestBgeM3Embedder:
+    """Integration tests — skipped if FlagEmbedding is not installed."""
+
+    @pytest.fixture(autouse=True)
+    def _skip_if_no_flag(self):
+        pytest.importorskip("FlagEmbedding")
+
+    @pytest.fixture
+    def embedder(self):
+        from omnilex.retrieval.models import BgeM3Embedder
+        return BgeM3Embedder()
+
+    def test_embedding_dim_is_1024(self, embedder):
+        assert embedder.embedding_dim == 1024
+
+    def test_encode_documents_shape(self, embedder):
+        vecs = embedder.encode_documents(["test document"])
+        assert vecs.shape == (1, 1024)
+
+    def test_encode_queries_shape(self, embedder):
+        vecs = embedder.encode_queries(["test query"])
+        assert vecs.shape == (1, 1024)
+
+    def test_encode_documents_returns_sparse(self, embedder):
+        vecs = embedder.encode_documents(["test"], return_sparse=True)
+        assert vecs.shape == (1, 1024)
+        assert hasattr(embedder, "last_sparse_weights")

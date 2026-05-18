@@ -11,6 +11,7 @@ Usage:
 """
 
 import argparse
+import csv
 import sys
 from pathlib import Path
 
@@ -18,6 +19,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from omnilex.retrieval.bm25_index import BM25Index, load_jsonl_corpus
+
+
+def load_csv_corpus(path: Path) -> list[dict]:
+    documents = []
+    with open(path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("text") and row.get("citation"):
+                documents.append({"citation": row["citation"], "text": row["text"]})
+    return documents
 
 
 def build_laws_index(input_dir: Path, output_dir: Path) -> None:
@@ -31,6 +42,7 @@ def build_laws_index(input_dir: Path, output_dir: Path) -> None:
 
     # Try to find laws corpus file
     possible_paths = [
+        input_dir / "swiss_citations" / "laws_de.csv",
         input_dir / "samples" / "federal_laws.jsonl",
         input_dir / "federal_laws.jsonl",
         input_dir / "laws" / "federal_laws.jsonl",
@@ -50,7 +62,7 @@ def build_laws_index(input_dir: Path, output_dir: Path) -> None:
 
     # Load corpus
     print(f"  Loading corpus from {corpus_path}")
-    documents = load_jsonl_corpus(corpus_path)
+    documents = load_csv_corpus(corpus_path) if corpus_path.suffix == ".csv" else load_jsonl_corpus(corpus_path)
     print(f"  Loaded {len(documents)} documents")
 
     if len(documents) == 0:
@@ -88,6 +100,7 @@ def build_courts_index(input_dir: Path, output_dir: Path) -> None:
 
     # Try to find courts corpus file
     possible_paths = [
+        input_dir / "swiss_citations" / "court_considerations.csv",
         input_dir / "samples" / "court_decisions.jsonl",
         input_dir / "court_decisions.jsonl",
         input_dir / "courts" / "bge.jsonl",
@@ -107,7 +120,7 @@ def build_courts_index(input_dir: Path, output_dir: Path) -> None:
 
     # Load corpus
     print(f"  Loading corpus from {corpus_path}")
-    documents = load_jsonl_corpus(corpus_path)
+    documents = load_csv_corpus(corpus_path) if corpus_path.suffix == ".csv" else load_jsonl_corpus(corpus_path)
     print(f"  Loaded {len(documents)} documents")
 
     if len(documents) == 0:

@@ -22,3 +22,9 @@ jupyter>=1.0.0
 ipykernel>=6.25.0
 ipywidgets>=8.0.0
 tqdm>=4.65.0
+
+# Dense retrieval
+FlagEmbedding>=1.2
+faiss-cpu>=1.7.4
+torch>=2.0
+transformers>=4.40

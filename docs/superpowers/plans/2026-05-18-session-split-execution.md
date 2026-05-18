@@ -282,22 +282,22 @@ Then mark the Session 3 checkboxes in the progress plan and commit it.
 
 ### Session 3 checklist
 
-- [ ] **Task 8** — Create `src/omnilex/retrieval/dense_retriever.py`
+- [x] **Task 8** — Create `src/omnilex/retrieval/dense_retriever.py`
   - Tests: `tests/test_retrieval/test_dense_retriever.py` (2 tests, full TDD)
   - Commit: `feat(retrieval): add DenseRetriever with anchor extraction and RRF fusion`
 
-- [ ] **Task 9** — Create `scripts/embed_corpus.py`
+- [x] **Task 9** — Create `scripts/embed_corpus.py`
   - TDD exception — verify clean import, smoke-test with `--limit 10` when data available
   - Commit: `feat(scripts): add embed_corpus.py for building dense FAISS indices`
 
-- [ ] **Task 10** — Create `scripts/run_evaluation.py`
+- [x] **Task 10** — Create `scripts/run_evaluation.py`
   - TDD exception — verify clean import
   - Commit: `feat(scripts): add run_evaluation.py with multi-k comparison`
 
-- [ ] Update `src/omnilex/retrieval/__init__.py` to export `DenseIndex`, `DenseRetriever`, `BgeM3Embedder`
+- [x] Update `src/omnilex/retrieval/__init__.py` to export `DenseIndex`, `DenseRetriever`, `BgeM3Embedder`
   - Commit: `feat(retrieval): export dense index, retriever, and model classes`
 
-- [ ] **Session 3 gate:** `pytest tests/test_retrieval/ -v` — all tests green
+- [x] **Session 3 gate:** `pytest tests/test_retrieval/ -v` — 29 passed, 4 skipped (BgeM3 skipped — FlagEmbedding not installed)
 
 - [ ] **Commit progress update:**
   ```bash

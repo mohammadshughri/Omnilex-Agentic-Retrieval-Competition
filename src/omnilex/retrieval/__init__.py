@@ -5,6 +5,9 @@ from .tools import CourtSearchTool, LawSearchTool
 from .fusion import Candidate, rrf_fuse, deduplicate_candidates
 from .anchor_extractor import extract_citation_anchors
 from .submission import generate_submission, select_top_k
+from .dense_index import DenseIndex, DenseIndexBuilder
+from .dense_retriever import DenseRetriever
+from .models import BgeM3Embedder
 
 __all__ = [
     "BM25Index",
@@ -19,4 +22,8 @@ __all__ = [
     "extract_citation_anchors",
     "generate_submission",
     "select_top_k",
+    "DenseIndex",
+    "DenseIndexBuilder",
+    "DenseRetriever",
+    "BgeM3Embedder",
 ]

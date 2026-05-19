@@ -7,6 +7,7 @@ from pathlib import Path
 
 import faiss
 import numpy as np
+from tqdm.auto import tqdm
 
 from omnilex.retrieval.models import EmbeddingModel
 
@@ -50,7 +51,8 @@ class DenseIndexBuilder:
         ]
 
         all_vecs = []
-        for i in range(0, len(texts), batch_size):
+        n_batches = (len(texts) + batch_size - 1) // batch_size
+        for i in tqdm(range(0, len(texts), batch_size), total=n_batches, desc="Embedding"):
             batch = texts[i : i + batch_size]
             vecs = self._embedder.encode_documents(batch, batch_size=batch_size)
             all_vecs.append(vecs)

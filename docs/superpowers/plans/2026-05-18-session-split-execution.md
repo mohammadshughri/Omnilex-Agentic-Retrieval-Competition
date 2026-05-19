@@ -299,7 +299,7 @@ Then mark the Session 3 checkboxes in the progress plan and commit it.
 
 - [x] **Session 3 gate:** `pytest tests/test_retrieval/ -v` — 29 passed, 4 skipped (BgeM3 skipped — FlagEmbedding not installed)
 
-- [ ] **Commit progress update:**
+- [x] **Commit progress update:**
   ```bash
   git add docs/superpowers/plans/2026-05-18-session-split-execution.md
   git commit -m "chore: mark Session 3 tasks complete in progress plan"
@@ -356,44 +356,28 @@ Then kick off the courts embedding job and mark Session 4 checkboxes in the prog
 
 ### Session 4 checklist
 
-- [ ] **Task 12** — Create `tests/test_retrieval/test_acceptance.py`
+- [x] **Task 12** — Create `tests/test_retrieval/test_acceptance.py`
   - 5 test classes: FAISS alignment, normalization roundtrip, RRF determinism, submission format, top-k bounds
   - Watch each test class fail before writing fixtures, then watch them pass
-  - Run: `pytest tests/test_retrieval/test_acceptance.py -v` — all pass
+  - Run: `pytest tests/test_retrieval/test_acceptance.py -v` — all pass (34 passed, 4 skipped)
   - Commit: `test(retrieval): add acceptance tests for pipeline correctness`
 
-- [ ] **Task 13 — Step 1:** Build laws index (~20 min on GPU)
-  ```bash
-  python scripts/embed_corpus.py --corpus laws --output data/processed/bge_m3/laws
-  ```
+- [ ] **Task 13 — Step 1:** Build laws index — runs on Kaggle notebook v10
+  - Notebook: https://www.kaggle.com/code/moeghri/omnilex-bgem3-embed (v10, SKIP_LAWS_EMBED=False)
+  - Index from previous run available at kernel output (175,933 passages, dim=1024)
 
-- [ ] **Task 13 — Step 2:** Verify laws index
-  ```bash
-  python -c "
-  from omnilex.retrieval.dense_index import DenseIndex
-  idx = DenseIndex.load('data/processed/bge_m3/laws')
-  print(f'Laws index: {len(idx.metadata)} passages, dim={idx.index.d}')
-  print(f'First citation: {idx.metadata[0][\"citation_raw\"]}')
-  "
-  ```
+- [ ] **Task 13 — Step 2:** Verify laws index — Cell 6 in Kaggle notebook
+  - Expected: `Laws index: 175,933 passages, dim=1024`
 
-- [ ] **Task 13 — Step 3:** Laws-only evaluation
-  ```bash
-  python scripts/run_evaluation.py \
-      --laws-index data/processed/bge_m3/laws \
-      --val-csv data/raw/lexam/val.csv \
-      --top-k 2 3 5 10 \
-      --output results/bgem3_laws_only.json
-  ```
+- [ ] **Task 13 — Step 3:** Laws-only evaluation — Cell 7 in Kaggle notebook
+  - Saves `results/bgem3_laws_only.json` to Kaggle output
+  - Copy JSON from Output tab and commit below
 
 - [ ] Commit results: `git add results/ && git commit -m "results: BGE-M3 laws-only eval on val.csv"`
 
-- [ ] **Start courts job** (runs unattended, 4–8 hours):
-  ```bash
-  python scripts/embed_corpus.py --corpus courts --output data/processed/bge_m3/courts
-  ```
+- [ ] **Start courts job** — Cell 9 in Kaggle notebook (EMBED_COURTS=True, runs ~60-90 min)
 
-- [ ] **Session 4 gate:** `pytest tests/test_retrieval/ -v` — all tests green
+- [ ] **Session 4 gate:** `pytest tests/test_retrieval/ -v` — 34 passed, 4 skipped ✓
 
 - [ ] **Commit progress update** (fill in the results table below before committing):
   ```bash

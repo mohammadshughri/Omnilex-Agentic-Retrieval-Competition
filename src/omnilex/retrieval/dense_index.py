@@ -51,11 +51,12 @@ class DenseIndexBuilder:
         ]
 
         all_vecs = []
-        n_batches = (len(texts) + batch_size - 1) // batch_size
-        for i in tqdm(range(0, len(texts), batch_size), total=n_batches, desc="Embedding"):
-            batch = texts[i : i + batch_size]
-            vecs = self._embedder.encode_documents(batch, batch_size=batch_size)
-            all_vecs.append(vecs)
+        with tqdm(total=len(texts), desc="Embedding", unit=" docs") as pbar:
+            for i in range(0, len(texts), batch_size):
+                batch = texts[i : i + batch_size]
+                vecs = self._embedder.encode_documents(batch, batch_size=batch_size)
+                all_vecs.append(vecs)
+                pbar.update(len(batch))
 
         embeddings = np.vstack(all_vecs).astype(np.float32)
         np.save(output_dir / "dense.npy", embeddings)

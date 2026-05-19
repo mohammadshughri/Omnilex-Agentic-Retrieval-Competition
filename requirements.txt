@@ -26,5 +26,6 @@ tqdm>=4.65.0
 # Dense retrieval
 FlagEmbedding>=1.2
 faiss-cpu>=1.7.4
+scipy>=1.11.0
 torch>=2.0
 transformers>=4.40

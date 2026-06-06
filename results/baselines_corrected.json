@@ -98,5 +98,29 @@
       "bge": 7,
       "docket": 4
     }
-  ]
+  ],
+  "dense_e5mistral_laws_sample10": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 10
+  },
+  "dense_e5mistral_laws_sample100": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 100
+  },
+  "dense_e5mistral_laws_sample1000": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 1000
+  }
 }

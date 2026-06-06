@@ -9,7 +9,7 @@ from .types import Citation, CitationType
 class CitationNormalizer:
     """Normalize Swiss legal citations to canonical form.
 
-    Handles two main citation types:
+    Handles three citation types:
     1. Federal law citations - Canonical format: Art. X [Abs. Y] BOOK
        Examples: "Art. 1 ZGB", "Art. 11 Abs. 2 OR"
        BOOK is the law abbreviation (loaded from data/abbrev-translations.json)
@@ -17,6 +17,9 @@ class CitationNormalizer:
 
     2. BGE (Bundesgerichtsentscheide) - Federal Court decision citations
        Examples: "BGE 116 Ia 56", "BGE 116 Ia 56 E. 2b"
+
+    3. Docket-style Federal Tribunal cases (unpublished) - Canonical: CASE E. X
+       Examples: "1B_210/2023 E. 4.1", "7B_496/2025 E. 3.2"
     """
 
     # BGE pattern: "BGE 116 Ia 56", "BGE 116 Ia 56 E. 2b", "BGE 141 III 513 E. 5.3.1"
@@ -31,6 +34,17 @@ class CitationNormalizer:
         r"(?:\d+[a-z]?)"  # Base: digit(s) + optional letter
         r"(?:\.\d+[a-z]?)*"  # Decimal extensions (e.g., .3.1)
         r"(?:(?:/[a-z]+)|(?:-\d+[a-z]?))?))?"  # Suffix: slash+letters OR range
+    )
+
+    # Docket pattern: "1B_210/2023 E. 4.1", "7B_496/2025 E. 3.2"
+    # Case number: 1-2 digits + uppercase letter + underscore + digits + slash + 4-digit year
+    DOCKET_PATTERN = (
+        r"(\d{1,2}[A-Z]_\d+/\d{4})"  # case number: 1B_210/2023
+        r"(?:\s+(?:E\.|cons\.?|Erw\.?)\s*"
+        r"((?:\d+[a-z]?)"  # base: 4
+        r"(?:\.\d+[a-z]?)*"  # decimal: .1, .1.1
+        r"(?:(?:/[a-z]+)|(?:-\d+[a-z]?))?)"  # suffix
+        r")?"
     )
 
     # Article pattern: "Art. 1", "Art 1", "Art. 1a", "Artikel 1"
@@ -64,6 +78,11 @@ class CitationNormalizer:
         if bge_match:
             return self._parse_bge(raw_citation, bge_match)
 
+        # Try docket-style case number (unpublished Federal Tribunal decisions)
+        docket_match = re.search(self.DOCKET_PATTERN, raw_citation)
+        if docket_match:
+            return self._parse_docket(raw_citation, docket_match)
+
         # Try law abbreviation patterns (e.g., "Art. 1 ZGB")
         # Check against all known abbreviations from JSON file
         for abbrev in self._law_abbreviations:
@@ -89,6 +108,20 @@ class CitationNormalizer:
             section=section,
             page=int(page),
             consideration=consideration,
+        )
+
+    def _parse_docket(self, raw_citation: str, match: re.Match) -> Citation:
+        """Parse a docket-style Federal Tribunal citation (unpublished decision)."""
+        case_number, consideration = match.group(1), match.group(2)
+
+        canonical = case_number
+        if consideration:
+            canonical += f" E. {consideration}"
+
+        return Citation(
+            raw_text=raw_citation,
+            citation_type=CitationType.COURT_DECISION,
+            canonical_id=canonical,
         )
 
     def _parse_law_abbrev(self, raw_citation: str, abbrev: str) -> Citation:

@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Pivot — Omnilex Team Briefing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <style>
+    /* =============================================
+       MANDATORY VIEWPORT BASE
+       ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow-x: hidden; }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #050b18;
+      color: #e8f4f8;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-height: 100%;
+      overflow: hidden;
+      padding: var(--slide-padding);
+    }
+
+    /* =============================================
+       DESIGN TOKENS — NEON CYBER
+       ============================================= */
+    :root {
+      --cyan:         #00d4ff;
+      --magenta:      #ff2d9e;
+      --purple:       #b464ff;
+      --navy:         #050b18;
+      --navy-mid:     #0d1f35;
+      --navy-card:    #0a1626;
+      --text:         #e8f4f8;
+      --text-muted:   #6a8aa8;
+      --grid-col:     rgba(0, 212, 255, 0.055);
+
+      --title-size:   clamp(1.6rem, 5.5vw, 4.5rem);
+      --h2-size:      clamp(1.1rem, 3vw, 2.2rem);
+      --h3-size:      clamp(0.9rem, 2vw, 1.5rem);
+      --body-size:    clamp(0.72rem, 1.3vw, 1rem);
+      --small-size:   clamp(0.6rem, 0.9vw, 0.78rem);
+      --mega-size:    clamp(3.5rem, 13vw, 11rem);
+
+      --slide-padding: clamp(1.5rem, 5vw, 5rem);
+      --content-gap:   clamp(0.6rem, 2vw, 2rem);
+      --card-gap:      clamp(0.4rem, 1.2vw, 1.2rem);
+    }
+
+    /* =============================================
+       GRID BACKGROUND
+       ============================================= */
+    .slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg,   transparent, transparent 59px, var(--grid-col) 60px),
+        repeating-linear-gradient(90deg,  transparent, transparent 59px, var(--grid-col) 60px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide > * { position: relative; z-index: 1; }
+
+    /* =============================================
+       DECORATIVE GLOWS
+       ============================================= */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(80px);
+      opacity: 0.18;
+    }
+
+    /* =============================================
+       TYPOGRAPHY
+       ============================================= */
+    h1 { font-family: 'Space Grotesk', sans-serif; font-size: var(--title-size); font-weight: 700; line-height: 1.05; }
+    h2 { font-family: 'Space Grotesk', sans-serif; font-size: var(--h2-size);    font-weight: 600; line-height: 1.2;  }
+    h3 { font-family: 'Space Grotesk', sans-serif; font-size: var(--h3-size);    font-weight: 500; line-height: 1.3;  }
+    p  { font-size: var(--body-size); line-height: 1.55; }
+
+    .mono    { font-family: 'JetBrains Mono', monospace; }
+    .label   { font-family: 'JetBrains Mono', monospace; font-size: var(--small-size); text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted); }
+    .mega    { font-family: 'Space Grotesk', sans-serif; font-size: var(--mega-size); font-weight: 700; line-height: 0.88; }
+
+    .glow-cyan    { color: var(--cyan);    text-shadow: 0 0 28px rgba(0,212,255,0.9), 0 0 55px rgba(0,212,255,0.4); }
+    .glow-magenta { color: var(--magenta); text-shadow: 0 0 28px rgba(255,45,158,0.9), 0 0 55px rgba(255,45,158,0.4); }
+    .glow-red     { color: #ff4d6d;        text-shadow: 0 0 28px rgba(255,77,109,0.9), 0 0 55px rgba(255,77,109,0.4); }
+    .glow-purple  { color: var(--purple);  text-shadow: 0 0 28px rgba(180,100,255,0.9), 0 0 55px rgba(180,100,255,0.4); }
+    .muted        { color: var(--text-muted); }
+
+    /* =============================================
+       CARDS & BOXES
+       ============================================= */
+    .card {
+      background: var(--navy-card);
+      border-radius: 6px;
+      padding: clamp(0.7rem, 1.8vw, 1.8rem);
+    }
+
+    .card-cyan    { border: 1px solid rgba(0,212,255,0.25);   box-shadow: 0 0 24px rgba(0,212,255,0.08), inset 0 0 20px rgba(0,212,255,0.04); }
+    .card-magenta { border: 1px solid rgba(255,45,158,0.28);  box-shadow: 0 0 24px rgba(255,45,158,0.08), inset 0 0 20px rgba(255,45,158,0.04); }
+    .card-neutral { border: 1px solid rgba(255,255,255,0.08); }
+    .card-red     { border: 1px solid rgba(255,77,109,0.3);   box-shadow: 0 0 24px rgba(255,77,109,0.08); }
+    .card-purple  { border: 1px solid rgba(180,100,255,0.25); box-shadow: 0 0 24px rgba(180,100,255,0.08); }
+
+    /* =============================================
+       BADGES
+       ============================================= */
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(0.5rem, 0.8vw, 0.65rem);
+      padding: 0.2em 0.7em;
+      border-radius: 100px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .badge-done    { background: rgba(0,212,255,0.1);   color: var(--cyan);    border: 1px solid rgba(0,212,255,0.3);   }
+    .badge-next    { background: rgba(255,204,0,0.1);   color: #ffcc00;        border: 1px solid rgba(255,204,0,0.3);   }
+    .badge-blocked { background: rgba(255,45,158,0.1);  color: var(--magenta); border: 1px solid rgba(255,45,158,0.3);  }
+
+    /* =============================================
+       LAYOUT HELPERS
+       ============================================= */
+    .two-col   { display: grid; grid-template-columns: 1fr 1fr;           gap: var(--card-gap); }
+    .three-col { display: grid; grid-template-columns: repeat(3, 1fr);    gap: var(--card-gap); }
+    .four-col  { display: grid; grid-template-columns: repeat(4, 1fr);    gap: var(--card-gap); }
+
+    .flex-col  { display: flex; flex-direction: column; }
+    .flex-row  { display: flex; align-items: center;    }
+    .gap-sm    { gap: clamp(0.4rem, 1vw,   1rem);  }
+    .gap-md    { gap: clamp(0.7rem, 1.5vw, 1.5rem); }
+    .gap-lg    { gap: clamp(1rem,   2.5vw, 2.5rem); }
+
+    .cyber-line {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      margin: clamp(0.5rem, 1.2vw, 1.2rem) 0;
+    }
+
+    .corner-tag {
+      position: absolute;
+      top: clamp(1rem, 2vw, 2rem);
+      right: clamp(1rem, 2vw, 2rem);
+      text-align: right;
+      z-index: 2;
+    }
+
+    /* =============================================
+       BAR CHART
+       ============================================= */
+    .bar-row   { display: flex; align-items: center; gap: clamp(0.5rem, 1vw, 1rem); }
+    .bar-lbl   { font-family: 'JetBrains Mono', monospace; font-size: var(--small-size); flex: 0 0 clamp(80px, 16vw, 170px); color: var(--text-muted); }
+    .bar-track { flex: 1; height: 7px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+    .bar-fill  { height: 100%; border-radius: 4px; width: 0; transition: width 1.2s cubic-bezier(.4,0,.2,1); }
+    .bar-val   { font-family: 'JetBrains Mono', monospace; font-size: var(--small-size); flex: 0 0 55px; text-align: right; }
+
+    /* =============================================
+       LAYER CARDS (architecture slide)
+       ============================================= */
+    .layer-card { border-radius: 6px; padding: clamp(0.6rem, 1.4vw, 1.4rem); display: flex; flex-direction: column; gap: 0.4rem; position: relative; overflow: hidden; }
+    .layer-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; }
+    .l1 { background: rgba(0,212,255,0.06);   border: 1px solid rgba(0,212,255,0.22);   } .l1::after { background: var(--cyan); }
+    .l2 { background: rgba(80,180,255,0.05);  border: 1px solid rgba(80,180,255,0.18);  } .l2::after { background: #50b4ff; }
+    .l3 { background: rgba(255,45,158,0.08);  border: 1px solid rgba(255,45,158,0.28);  } .l3::after { background: var(--magenta); }
+    .l4 { background: rgba(180,100,255,0.06); border: 1px solid rgba(180,100,255,0.22); } .l4::after { background: var(--purple); }
+    .layer-num   { font-family: 'JetBrains Mono', monospace; font-size: var(--small-size); opacity: 0.55; }
+    .layer-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(0.7rem, 1.6vw, 1.05rem); font-weight: 600; line-height: 1.2; }
+    .layer-desc  { font-size: clamp(0.58rem, 1vw, 0.78rem); color: var(--text-muted); line-height: 1.4; }
+
+    /* =============================================
+       NAVIGATION
+       ============================================= */
+    .nav-bar {
+      position: fixed;
+      bottom: clamp(0.8rem, 2vh, 2rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 200;
+      background: rgba(5,11,24,0.85);
+      border: 1px solid rgba(0,212,255,0.18);
+      border-radius: 100px;
+      padding: 0.5rem 1.1rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-dots { display: flex; gap: 5px; }
+
+    .nav-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      padding: 0;
+    }
+    .nav-dot.active {
+      background: var(--cyan);
+      box-shadow: 0 0 8px rgba(0,212,255,0.9);
+      width: 20px;
+      border-radius: 3px;
+    }
+
+    .slide-counter { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); min-width: 44px; text-align: center; }
+
+    /* =============================================
+       REVEAL ANIMATIONS
+       ============================================= */
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.55s ease, transform 0.55s ease; }
+    .reveal.in { opacity: 1; transform: translateY(0); }
+    .d1 { transition-delay: 0.08s; } .d2 { transition-delay: 0.18s; } .d3 { transition-delay: 0.28s; }
+    .d4 { transition-delay: 0.38s; } .d5 { transition-delay: 0.48s; } .d6 { transition-delay: 0.58s; }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.18; }
+      50%       { opacity: 0.3;  }
+    }
+
+    /* =============================================
+       RESPONSIVE BREAKPOINTS
+       ============================================= */
+    @media (max-width: 900px)  { .four-col { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px)  { .two-col, .three-col, .four-col { grid-template-columns: 1fr; } }
+
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding: clamp(0.8rem, 3vw, 2rem);
+        --content-gap:   clamp(0.4rem, 1.2vw, 1rem);
+        --title-size:    clamp(1.2rem, 4.5vw, 2.5rem);
+        --h2-size:       clamp(0.95rem, 2.5vw, 1.6rem);
+        --mega-size:     clamp(2.5rem, 9vw, 6rem);
+      }
+    }
+    @media (max-height: 600px) {
+      :root { --slide-padding: clamp(0.5rem, 2vw, 1.2rem); --mega-size: clamp(1.8rem, 7vw, 4rem); }
+      .nav-bar { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.15s !important; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================
+     NAVIGATION BAR
+     ================================================ -->
+<nav class="nav-bar" aria-label="Slide navigation">
+  <span class="slide-counter" id="counter">01 / 12</span>
+  <div class="nav-dots" id="dots" role="tablist"></div>
+</nav>
+
+<!-- ================================================
+     SLIDE 01 — TITLE
+     ================================================ -->
+<section class="slide" id="s1" aria-label="Title slide">
+  <div class="orb" style="width:50vw;height:50vw;background:var(--cyan);top:-15%;left:-10%;animation:pulse-glow 5s ease-in-out infinite;"></div>
+  <div class="orb" style="width:35vw;height:35vw;background:var(--magenta);bottom:-10%;right:-8%;animation:pulse-glow 7s ease-in-out infinite 1s;"></div>
+
+  <div class="corner-tag label">
+    <span style="color:var(--cyan)">OMNILEX</span><br>
+    Competition &middot; May 2026
+  </div>
+
+  <div class="slide-content" style="justify-content:center;">
+    <div class="flex-col gap-md">
+      <p class="label reveal d1">Team Briefing</p>
+      <h1 class="reveal d2" style="max-width:14ch;">
+        The<br>
+        <span class="glow-cyan">Pivot.</span>
+      </h1>
+      <div class="cyber-line reveal d3" style="max-width:420px;"></div>
+      <p class="reveal d4" style="font-size:var(--h3-size);color:var(--text-muted);max-width:48ch;">
+        Why we&rsquo;re changing our entire approach &mdash;<br>and what comes next.
+      </p>
+      <div class="flex-row gap-sm reveal d5" style="margin-top:0.5rem;">
+        <span class="badge badge-next">Architecture V2</span>
+        <span class="badge badge-done">Empirically verified</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 02 — WHERE WE STAND
+     ================================================ -->
+<section class="slide" id="s2" aria-label="Score comparison">
+  <div class="orb" style="width:40vw;height:40vw;background:var(--cyan);top:10%;right:5%;animation:pulse-glow 6s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">02</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-lg">
+      <div>
+        <p class="label reveal d1">Leaderboard reality check</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">Where we stand</h2>
+      </div>
+
+      <div class="two-col reveal d3" style="align-items:stretch;">
+        <div class="card card-red flex-col gap-sm" style="text-align:center;justify-content:center;padding:clamp(1rem,3vw,3rem) clamp(0.7rem,2vw,2rem);">
+          <p class="label" style="color:#ff4d6d;">Our current score</p>
+          <div class="mega glow-red">0.0435</div>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">BGE-M3 dense retrieval &middot; k=10</p>
+        </div>
+        <div class="card card-cyan flex-col gap-sm" style="text-align:center;justify-content:center;padding:clamp(1rem,3vw,3rem) clamp(0.7rem,2vw,2rem);">
+          <p class="label" style="color:var(--cyan);">Leaderboard leader</p>
+          <div class="mega glow-cyan">0.3594</div>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">Kanak Raj &middot; LLM-based approach</p>
+        </div>
+      </div>
+
+      <div class="card card-neutral reveal d4" style="text-align:center;padding:clamp(0.7rem,1.5vw,1.5rem);">
+        <span class="mega glow-magenta" style="font-size:clamp(2rem,7vw,5.5rem);">8&times;</span>
+        <span style="font-family:'Space Grotesk',sans-serif;font-size:var(--h3-size);color:var(--text-muted);"> behind the leaders</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 03 — THE WRONG PROBLEM
+     ================================================ -->
+<section class="slide" id="s3" aria-label="Wrong problem framing">
+  <div class="orb" style="width:45vw;height:45vw;background:var(--magenta);bottom:-10%;left:5%;animation:pulse-glow 8s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">03</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Root cause</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">We were solving<br>the <span class="glow-red">wrong</span> problem.</h2>
+      </div>
+
+      <div class="cyber-line reveal d2"></div>
+
+      <div class="two-col reveal d3" style="align-items:stretch;">
+        <div class="card card-red flex-col gap-sm">
+          <p class="label" style="color:#ff4d6d;">&#10060; What we were doing</p>
+          <p class="layer-title" style="font-size:var(--h3-size);">Document Retrieval</p>
+          <div class="cyber-line" style="background:linear-gradient(90deg,#ff4d6d,transparent);"></div>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">Find documents similar to the query, rank them, extract citations from top results.</p>
+          <p style="font-size:var(--small-size);color:#ff4d6d;margin-top:0.3rem;">Ceiling: ~0.065 Macro F1 &mdash; no matter how good the ranker.</p>
+        </div>
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">&#10003; What wins</p>
+          <p class="layer-title" style="font-size:var(--h3-size);">Citation Prediction</p>
+          <div class="cyber-line"></div>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">Reason about the legal scenario &rarr; predict which Swiss laws and BGE decisions apply &mdash; like a lawyer would.</p>
+          <p style="font-size:var(--small-size);color:var(--cyan);margin-top:0.3rem;">Top score: 0.3594 &mdash; using LLM reasoning.</p>
+        </div>
+      </div>
+
+      <div class="card card-neutral reveal d4" style="padding:clamp(0.6rem,1.2vw,1.2rem);">
+        <p style="font-size:var(--body-size);color:var(--text-muted);">
+          <span style="color:#ffcc00;">&#128161;</span>&nbsp;
+          &ldquo;BetterCallAgent&rdquo; (3rd place, 0.336) &mdash; the name says it all. Agentic LLM approach, not retrieval.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 04 — DATA REALITY
+     ================================================ -->
+<section class="slide" id="s4" aria-label="Data distribution shift">
+  <div class="orb" style="width:35vw;height:35vw;background:var(--purple);top:10%;right:5%;animation:pulse-glow 7s ease-in-out infinite 2s;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">04</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Critical discovery</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">The data has a <span class="glow-magenta">6&times; distribution shift</span></h2>
+      </div>
+
+      <div class="two-col reveal d3">
+        <div class="card card-neutral flex-col gap-sm">
+          <p class="label">Training set</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Language</span>
+              <span class="mono" style="font-size:var(--body-size);">German &#127465;&#127466;</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Queries</span>
+              <span class="mono" style="font-size:var(--body-size);">1,139</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Avg citations / query</span>
+              <span class="mono glow-red" style="font-size:var(--body-size);">4.1</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Max citations</span>
+              <span class="mono" style="font-size:var(--body-size);">44</span>
+            </div>
+          </div>
+        </div>
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">Val / Test set</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Language</span>
+              <span class="mono" style="font-size:var(--body-size);">English &#127468;&#127463;</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Queries</span>
+              <span class="mono" style="font-size:var(--body-size);">10 val + 40 test</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Avg citations / query</span>
+              <span class="mono glow-cyan" style="font-size:var(--body-size);">25.1</span>
+            </div>
+            <div class="flex-row" style="justify-content:space-between;">
+              <span style="font-size:var(--body-size);color:var(--text-muted);">Max citations</span>
+              <span class="mono" style="font-size:var(--body-size);">47</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="three-col reveal d4">
+        <div class="card card-neutral" style="text-align:center;">
+          <p class="label">TF-IDF transfer</p>
+          <p class="mono glow-red" style="font-size:var(--h3-size);margin-top:0.3rem;">0.8%</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">recall &middot; useless</p>
+        </div>
+        <div class="card card-neutral" style="text-align:center;">
+          <p class="label">Regex extraction</p>
+          <p class="mono glow-red" style="font-size:var(--h3-size);margin-top:0.3rem;">1.2%</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">recall &middot; improvable</p>
+        </div>
+        <div class="card card-cyan" style="text-align:center;">
+          <p class="label" style="color:var(--cyan);">Court corpus coverage</p>
+          <p class="mono glow-cyan" style="font-size:var(--h3-size);margin-top:0.3rem;">68%</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">of gold BGE citations exist</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 05 — RETRIEVAL CEILING
+     ================================================ -->
+<section class="slide" id="s5" aria-label="Retrieval performance ceiling">
+  <div class="orb" style="width:40vw;height:40vw;background:var(--cyan);bottom:-5%;right:-5%;animation:pulse-glow 6s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">05</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">The hard truth</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">Pure retrieval has a <span class="glow-red">hard ceiling</span></h2>
+      </div>
+
+      <div class="card card-neutral reveal d3" style="padding:clamp(0.8rem,2vw,2rem);">
+        <div class="flex-col gap-sm">
+          <div class="bar-row">
+            <span class="bar-lbl">Our BGE-M3</span>
+            <div class="bar-track"><div class="bar-fill" style="background:#ff4d6d;" data-width="12.1"></div></div>
+            <span class="bar-val glow-red">0.0435</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">Retrieval ceiling</span>
+            <div class="bar-track"><div class="bar-fill" style="background:#ff8050;" data-width="18.1"></div></div>
+            <span class="bar-val" style="color:#ff8050;">~0.065</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">3rd &middot; BetterCallAgent</span>
+            <div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,#50b4ff,var(--cyan));" data-width="93.5"></div></div>
+            <span class="bar-val glow-cyan">0.336</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-lbl">1st &middot; Kanak Raj</span>
+            <div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,var(--cyan),#00ffe5);" data-width="100"></div></div>
+            <span class="bar-val glow-cyan">0.359</span>
+          </div>
+          <div class="cyber-line" style="margin:0.2rem 0;"></div>
+          <div class="bar-row">
+            <span class="bar-lbl" style="color:var(--purple);">Oracle k=25</span>
+            <div class="bar-track"><div class="bar-fill" style="background:linear-gradient(90deg,var(--purple),#e064ff);" data-width="100"></div></div>
+            <span class="bar-val glow-purple">0.779</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col reveal d4">
+        <div class="card card-neutral" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Key insight</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;color:var(--text-muted);">No ranking improvement gets us past <span style="color:#ff4d6d;">0.065</span>. The wall is structural.</p>
+        </div>
+        <div class="card card-cyan" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label" style="color:var(--cyan);">The opportunity</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;color:var(--text-muted);">Oracle ceiling of <span class="glow-cyan">0.779</span> is reachable with LLM reasoning on top of retrieval.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 06 — NEW ARCHITECTURE OVERVIEW
+     ================================================ -->
+<section class="slide" id="s6" aria-label="New 4-layer architecture">
+  <div class="orb" style="width:38vw;height:38vw;background:var(--magenta);top:5%;right:0%;animation:pulse-glow 9s ease-in-out infinite 1s;"></div>
+  <div class="orb" style="width:30vw;height:30vw;background:var(--cyan);bottom:5%;left:2%;animation:pulse-glow 7s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">06</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Architecture V2</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">The 4-Layer Pipeline</h2>
+      </div>
+
+      <div class="four-col reveal d3" style="align-items:stretch;">
+        <div class="layer-card l1">
+          <span class="layer-num">Layer 1</span>
+          <span class="layer-title glow-cyan">Regex Extraction</span>
+          <span class="layer-desc">Pull Art. citations directly from query text using improved patterns + FR&rarr;DE mapping</span>
+          <span class="badge badge-next" style="margin-top:0.3rem;align-self:flex-start;">In progress</span>
+        </div>
+        <div class="layer-card l2">
+          <span class="layer-num">Layer 2</span>
+          <span class="layer-title" style="color:#50b4ff;">Dense Retrieval</span>
+          <span class="layer-desc">BGE-M3 on laws + courts at k=25. Already built &mdash; oracle F1 ceiling 0.779</span>
+          <span class="badge badge-done" style="margin-top:0.3rem;align-self:flex-start;">Built &#10003;</span>
+        </div>
+        <div class="layer-card l3">
+          <span class="layer-num">Layer 3</span>
+          <span class="layer-title glow-magenta">LLM Reasoning &#9733;</span>
+          <span class="layer-desc">Given query + candidates &rarr; reason like a lawyer &rarr; output final citation list</span>
+          <span class="badge badge-blocked" style="margin-top:0.3rem;align-self:flex-start;">Needs API docs</span>
+        </div>
+        <div class="layer-card l4">
+          <span class="layer-num">Layer 4</span>
+          <span class="layer-title glow-purple">Fusion + Adaptive k</span>
+          <span class="layer-desc">RRF merges all layers. Adaptive k: val range 10&ndash;47, mean 25.1 (not fixed 10)</span>
+          <span class="badge badge-done" style="margin-top:0.3rem;align-self:flex-start;">RRF built &#10003;</span>
+        </div>
+      </div>
+
+      <div class="card card-neutral reveal d4" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+        <p style="font-size:var(--body-size);color:var(--text-muted);text-align:center;">
+          Each layer is <span style="color:#ffcc00;">verified on val.csv</span> before the next is built.&nbsp;
+          No guessing, no wasted work.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 07 — LAYER 1: REGEX
+     ================================================ -->
+<section class="slide" id="s7" aria-label="Layer 1: Regex extraction">
+  <div class="orb" style="width:35vw;height:35vw;background:var(--cyan);top:-5%;left:-5%;animation:pulse-glow 6s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">07</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Layer 1 &middot; Starting now</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;"><span class="glow-cyan">Regex Extraction</span> &mdash; improved</h2>
+      </div>
+
+      <div class="two-col reveal d3">
+        <div class="card card-red flex-col gap-sm">
+          <p class="label" style="color:#ff4d6d;">Current baseline</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Recall</span><span class="mono glow-red" style="font-size:var(--body-size);">1.2%</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Precision</span><span class="mono" style="font-size:var(--body-size);">27%</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Val queries with hits</span><span class="mono" style="font-size:var(--body-size);">4 / 10</span></div>
+          </div>
+        </div>
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">Target (after improvements)</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Recall</span><span class="mono glow-cyan" style="font-size:var(--body-size);">&gt; 2%</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Precision</span><span class="mono" style="font-size:var(--body-size);">&gt; 25%</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Verified on</span><span class="mono" style="font-size:var(--body-size);">val.csv gold</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="three-col reveal d4">
+        <div class="card card-neutral" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Improvement 1</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;">Bare article + nearest abbreviation within 150 chars (e.g. <span class="mono" style="color:var(--cyan);">Art. 6 ECHR</span>)</p>
+        </div>
+        <div class="card card-neutral" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Improvement 2</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;">FR&rarr;DE abbreviation mapping: <span class="mono" style="color:var(--cyan);">LAI&rarr;IVG, CPC&rarr;ZPO</span> (40+ mappings)</p>
+        </div>
+        <div class="card card-neutral" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Improvement 3</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;">BGE citation pattern + case number pattern added to extractor</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 08 — LAYER 2: DENSE RETRIEVAL
+     ================================================ -->
+<section class="slide" id="s8" aria-label="Layer 2: Dense retrieval">
+  <div class="orb" style="width:40vw;height:40vw;background:#50b4ff;bottom:-5%;right:-5%;animation:pulse-glow 8s ease-in-out infinite 2s;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">08</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div class="flex-row" style="align-items:flex-end;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <p class="label reveal d1">Layer 2 &middot; Already built</p>
+          <h2 class="reveal d2" style="margin-top:0.4rem;"><span style="color:#50b4ff;">Dense Retrieval</span> &mdash; one change</h2>
+        </div>
+        <span class="badge badge-done reveal d2">BGE-M3 &#10003;</span>
+      </div>
+
+      <div class="two-col reveal d3" style="align-items:stretch;">
+        <div class="card card-neutral flex-col gap-sm">
+          <p class="label">What we keep</p>
+          <ul class="flex-col gap-sm" style="list-style:none;margin-top:0.3rem;">
+            <li style="font-size:var(--body-size);color:var(--text-muted);">&bull; BGE-M3 multilingual embeddings</li>
+            <li style="font-size:var(--body-size);color:var(--text-muted);">&bull; FAISS index on laws + courts corpora</li>
+            <li style="font-size:var(--body-size);color:var(--text-muted);">&bull; DenseRetriever + DenseIndex pipeline</li>
+          </ul>
+        </div>
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">The one change: k=10 &rarr; k=25</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Oracle F1 at k=10</span><span class="mono" style="font-size:var(--body-size);color:#ff8050;">0.644</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Oracle F1 at k=25</span><span class="mono glow-cyan" style="font-size:var(--body-size);">0.779</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Gain</span><span class="mono" style="font-size:var(--body-size);color:#ffcc00;">+13.5% oracle ceiling</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-neutral reveal d4" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+        <p style="font-size:var(--body-size);color:var(--text-muted);">
+          <span style="color:#ffcc00;">Why k=25?</span>&nbsp;
+          Val queries have mean 25.1 gold citations (range 10&ndash;47). Submitting only k=10 means we miss 60% of citations on average before even scoring.
+        </p>
+      </div>
+
+      <div class="card card-cyan reveal d5" style="padding:clamp(0.5rem,1.2vw,1.2rem);text-align:center;">
+        <p style="font-size:var(--body-size);">68% of val gold BGE citations already exist in the court corpus &rarr; retrieval CAN find most of them.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 09 — LAYER 3: LLM REASONING ★
+     ================================================ -->
+<section class="slide" id="s9" aria-label="Layer 3: LLM reasoning">
+  <div class="orb" style="width:50vw;height:50vw;background:var(--magenta);top:-10%;right:-10%;animation:pulse-glow 7s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">09</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Layer 3 &middot; The differentiator &#9733;</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;"><span class="glow-magenta">LLM Reasoning</span> &mdash; the 8&times; gap</h2>
+      </div>
+
+      <div class="card card-magenta reveal d3" style="padding:clamp(0.7rem,1.8vw,1.8rem);">
+        <p style="font-size:var(--h3-size);font-family:'Space Grotesk',sans-serif;font-weight:500;">What an LLM does that retrieval cannot:</p>
+        <div class="flex-col gap-sm" style="margin-top:0.7rem;">
+          <p style="font-size:var(--body-size);color:var(--text-muted);">&rarr; <strong style="color:var(--text);">Understands legal reasoning</strong> &mdash; knows that an asylum case implicates Art. 3 EMRK, even if neither word appears in the query.</p>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">&rarr; <strong style="color:var(--text);">Cross-lingual inference</strong> &mdash; reasons in English about German/French law bodies without needing lexical overlap.</p>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">&rarr; <strong style="color:var(--text);">Predicts co-occurring citations</strong> &mdash; knows Art. 100 Abs. 1 BGG implies Art. 42 BGG procedurally.</p>
+        </div>
+      </div>
+
+      <div class="three-col reveal d4">
+        <div class="card card-neutral" style="text-align:center;padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Input</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;color:var(--text-muted);">Query + Layer 1 regex hits + Layer 2 top-25 candidates</p>
+        </div>
+        <div class="card card-magenta" style="text-align:center;padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label" style="color:var(--magenta);">LLM step</p>
+          <p style="font-size:var(--body-size);margin-top:0.3rem;">Reason &rarr; verify &rarr; predict full citation list</p>
+        </div>
+        <div class="card card-neutral" style="text-align:center;padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Status</p>
+          <span class="badge badge-blocked" style="margin-top:0.5rem;display:inline-block;">Needs uni API docs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 10 — LAYER 4: FUSION + ADAPTIVE K
+     ================================================ -->
+<section class="slide" id="s10" aria-label="Layer 4: Fusion and adaptive k">
+  <div class="orb" style="width:35vw;height:35vw;background:var(--purple);bottom:0%;left:0%;animation:pulse-glow 9s ease-in-out infinite 3s;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">10</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div class="flex-row" style="align-items:flex-end;gap:1rem;flex-wrap:wrap;">
+        <div>
+          <p class="label reveal d1">Layer 4 &middot; Mostly built</p>
+          <h2 class="reveal d2" style="margin-top:0.4rem;"><span class="glow-purple">Fusion</span> + Adaptive k</h2>
+        </div>
+        <span class="badge badge-done reveal d2">RRF &#10003;</span>
+      </div>
+
+      <div class="two-col reveal d3" style="align-items:stretch;">
+        <div class="card card-purple flex-col gap-sm">
+          <p class="label" style="color:var(--purple);">Reciprocal Rank Fusion (RRF)</p>
+          <p style="font-size:var(--body-size);color:var(--text-muted);margin-top:0.3rem;">Merges ranked lists from L1 + L2 + L3 without needing calibrated scores. Already implemented in <span class="mono" style="color:var(--text);">retrieval/fusion.py</span>.</p>
+          <p style="font-size:var(--small-size);color:var(--purple);margin-top:0.4rem;">Status: ready &#10003;</p>
+        </div>
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">Adaptive k &mdash; the missing piece</p>
+          <div class="flex-col gap-sm" style="margin-top:0.3rem;">
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Val range</span><span class="mono glow-cyan" style="font-size:var(--body-size);">10 &ndash; 47</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Val mean</span><span class="mono glow-cyan" style="font-size:var(--body-size);">25.1</span></div>
+            <div class="flex-row" style="justify-content:space-between;"><span style="font-size:var(--body-size);color:var(--text-muted);">Fixed k=10 misses</span><span class="mono glow-red" style="font-size:var(--body-size);">60% avg</span></div>
+          </div>
+          <p style="font-size:var(--small-size);color:#ffcc00;margin-top:0.4rem;">Must predict citation count per query, not use a global k.</p>
+        </div>
+      </div>
+
+      <div class="card card-neutral reveal d4" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+        <p style="font-size:var(--body-size);color:var(--text-muted);text-align:center;">
+          Best fixed k is 25 (oracle F1 = 0.779). But adaptive k &mdash; calibrated per query by the LLM &mdash; can push beyond that ceiling.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 11 — VERIFY BEFORE BUILDING
+     ================================================ -->
+<section class="slide" id="s11" aria-label="Verify before building methodology">
+  <div class="orb" style="width:45vw;height:45vw;background:var(--cyan);top:-10%;right:-5%;animation:pulse-glow 7s ease-in-out infinite;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">11</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Process</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">Verify before building &mdash; <span class="glow-cyan">every step</span></h2>
+      </div>
+
+      <div class="card card-neutral reveal d3" style="padding:clamp(0.6rem,1.5vw,1.5rem);">
+        <p style="font-size:var(--body-size);color:var(--text-muted);">
+          Our BGE-M3 pipeline was built without verifying the approach first. It scores 0.0435 &mdash; the best retrieval can do &mdash; but it&rsquo;s 8&times; behind leaders who use LLMs.
+          <strong style="color:var(--text);"> We don&rsquo;t repeat that mistake.</strong>
+        </p>
+      </div>
+
+      <div class="four-col reveal d4" style="align-items:stretch;">
+        <div class="card card-cyan flex-col gap-sm" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label" style="color:var(--cyan);">Step 1</p>
+          <p style="font-size:var(--body-size);font-weight:600;">Layer 1 regex</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">Measure precision + recall vs val gold. Must beat 1.2%.</p>
+          <span class="badge badge-next" style="align-self:flex-start;margin-top:auto;">Now</span>
+        </div>
+        <div class="card card-neutral flex-col gap-sm" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Step 2</p>
+          <p style="font-size:var(--body-size);font-weight:600;">Layer 2 at k=25</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">Re-embed, measure Macro F1. Compare k=10 vs k=25.</p>
+          <span class="badge badge-next" style="align-self:flex-start;margin-top:auto;">After L1</span>
+        </div>
+        <div class="card card-neutral flex-col gap-sm" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Step 3</p>
+          <p style="font-size:var(--body-size);font-weight:600;">Layer 3 LLM</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">Test single query through API. Measure F1 on val set.</p>
+          <span class="badge badge-blocked" style="align-self:flex-start;margin-top:auto;">Needs API</span>
+        </div>
+        <div class="card card-neutral flex-col gap-sm" style="padding:clamp(0.5rem,1.2vw,1.2rem);">
+          <p class="label">Step 4</p>
+          <p style="font-size:var(--body-size);font-weight:600;">Full pipeline</p>
+          <p style="font-size:var(--small-size);color:var(--text-muted);">RRF all layers + adaptive k. Final val F1 before submission.</p>
+          <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--text-muted);border:1px solid rgba(255,255,255,0.1);align-self:flex-start;margin-top:auto;">Last</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     SLIDE 12 — CALL TO ACTION
+     ================================================ -->
+<section class="slide" id="s12" aria-label="Call to action">
+  <div class="orb" style="width:40vw;height:40vw;background:var(--magenta);bottom:-5%;right:-5%;animation:pulse-glow 6s ease-in-out infinite;"></div>
+  <div class="orb" style="width:30vw;height:30vw;background:var(--cyan);top:5%;left:-5%;animation:pulse-glow 8s ease-in-out infinite 2s;"></div>
+
+  <div class="corner-tag label"><span style="color:var(--cyan)">12</span> / 12</div>
+
+  <div class="slide-content">
+    <div class="flex-col gap-md">
+      <div>
+        <p class="label reveal d1">Next steps</p>
+        <h2 class="reveal d2" style="margin-top:0.4rem;">What we need <span class="glow-cyan">from the team</span></h2>
+      </div>
+
+      <div class="three-col reveal d3" style="align-items:stretch;">
+        <div class="card card-cyan flex-col gap-sm">
+          <p class="label" style="color:var(--cyan);">Action 1 &middot; Critical</p>
+          <p class="layer-title" style="font-size:var(--h3-size);">Uni API Documentation</p>
+          <div class="cyber-line"></div>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">Share the LLM API docs with the team. Layer 3 (the differentiator) is completely blocked without this.</p>
+          <span class="badge badge-blocked" style="align-self:flex-start;margin-top:auto;">Unblocks Layer 3</span>
+        </div>
+        <div class="card card-neutral flex-col gap-sm">
+          <p class="label">Action 2 &middot; Starting now</p>
+          <p class="layer-title" style="font-size:var(--h3-size);">Regex Extractor v2</p>
+          <div class="cyber-line" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);"></div>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">Implement improved regex with FR&rarr;DE mapping and BGE patterns. Measure on val.csv. Baseline: 1.2% recall.</p>
+          <span class="badge badge-next" style="align-self:flex-start;margin-top:auto;">In progress</span>
+        </div>
+        <div class="card card-neutral flex-col gap-sm">
+          <p class="label">Action 3 &middot; GPU needed</p>
+          <p class="layer-title" style="font-size:var(--h3-size);">Re-embed at k=25</p>
+          <div class="cyber-line" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);"></div>
+          <p style="font-size:var(--body-size);color:var(--text-muted);">Run BGE-M3 embedding with k=25 on both corpora. Needs GPU (Kaggle notebook or local). Verify oracle ceiling.</p>
+          <span class="badge badge-next" style="align-self:flex-start;margin-top:auto;">After L1 verified</span>
+        </div>
+      </div>
+
+      <div class="card card-magenta reveal d4" style="padding:clamp(0.6rem,1.5vw,1.5rem);text-align:center;">
+        <p style="font-size:var(--h3-size);font-family:'Space Grotesk',sans-serif;font-weight:600;">
+          Target: <span class="glow-cyan">0.25+</span> Macro F1 within reach with this pipeline.
+        </p>
+        <p style="font-size:var(--body-size);color:var(--text-muted);margin-top:0.4rem;">Leaders are at 0.359. The architecture is right &mdash; now we execute.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================
+     JAVASCRIPT — PRESENTATION CONTROLLER
+     ================================================ -->
+<script>
+  class PresentationController {
+    constructor() {
+      this.slides    = Array.from(document.querySelectorAll('.slide'));
+      this.total     = this.slides.length;
+      this.current   = 0;
+      this.dotsEl    = document.getElementById('dots');
+      this.counterEl = document.getElementById('counter');
+      this.dots      = [];
+
+      this._buildDots();
+      this._bindEvents();
+      this._observe();
+      // trigger first slide immediately
+      this.slides[0].querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+    }
+
+    _buildDots() {
+      this.slides.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-dot' + (i === 0 ? ' active' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-label', 'Slide ' + (i + 1));
+        btn.addEventListener('click', () => this._goTo(i));
+        this.dotsEl.appendChild(btn);
+        this.dots.push(btn);
+      });
+    }
+
+    _bindEvents() {
+      document.addEventListener('keydown', (e) => {
+        if (['ArrowDown','ArrowRight','PageDown','Space'].includes(e.code)) { e.preventDefault(); this._goTo(this.current + 1); }
+        if (['ArrowUp','ArrowLeft','PageUp'].includes(e.code))             { e.preventDefault(); this._goTo(this.current - 1); }
+      });
+
+      let lastWheel = 0;
+      document.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastWheel < 700) return;
+        lastWheel = now;
+        if (e.deltaY > 0) this._goTo(this.current + 1);
+        else               this._goTo(this.current - 1);
+      }, { passive: false });
+
+      let touchY = 0;
+      document.addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
+      document.addEventListener('touchend',   (e) => {
+        const delta = touchY - e.changedTouches[0].clientY;
+        if (Math.abs(delta) < 40) return;
+        if (delta > 0) this._goTo(this.current + 1);
+        else            this._goTo(this.current - 1);
+      }, { passive: true });
+    }
+
+    _observe() {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const idx = this.slides.indexOf(entry.target);
+          this._setActive(idx);
+          // trigger reveal animations
+          entry.target.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+          // animate bars when slide enters view
+          entry.target.querySelectorAll('.bar-fill[data-width]').forEach(bar => {
+            setTimeout(() => { bar.style.width = bar.dataset.width + '%'; }, 350);
+          });
+        });
+      }, { threshold: 0.55 });
+
+      this.slides.forEach(s => io.observe(s));
+    }
+
+    _goTo(idx) {
+      if (idx < 0 || idx >= this.total) return;
+      this.slides[idx].scrollIntoView({ behavior: 'smooth' });
+    }
+
+    _setActive(idx) {
+      if (idx === this.current && this.dots[idx]?.classList.contains('active')) return;
+      this.dots[this.current]?.classList.remove('active');
+      this.current = idx;
+      this.dots[idx]?.classList.add('active');
+      this.counterEl.textContent =
+        String(idx + 1).padStart(2, '0') + ' / ' + String(this.total).padStart(2, '0');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => new PresentationController());
+</script>
+
+</body>
+</html>

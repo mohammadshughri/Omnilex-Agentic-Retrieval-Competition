@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Agentic Legal Information Retrieval — week 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow-x: hidden
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      overflow-y: scroll
+    }
+
+    :root {
+      --bg: #101827;
+      --surface: #182437;
+      --surface-2: #22314a;
+      --border: #4a6387;
+      --gold: #ffd166;
+      --gold-dim: #7a5c1e;
+      --blue: #7db7ff;
+      --blue-dim: #2a4878;
+      --green: #65f0a7;
+      --red: #ff7666;
+      --text: #f8fbff;
+      --text-muted: #c7d4e6;
+      --text-dim: #94a8c4;
+
+      --title-size: clamp(2.6rem, 7vw, 6.5rem);
+      --h2-size: clamp(1.5rem, 3.5vw, 2.8rem);
+      --body-size: clamp(0.88rem, 1.55vw, 1.15rem);
+      --small-size: clamp(0.8rem, 1.15vw, 0.93rem);
+      --mono-size: clamp(0.78rem, 1.28vw, 1.02rem);
+
+      --pad: clamp(1.1rem, 3vw, 2.4rem);
+      --gap: clamp(0.65rem, 1.6vw, 1.3rem);
+      --gap-sm: clamp(0.38rem, 0.85vw, 0.65rem);
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      position: relative;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .slide::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        radial-gradient(ellipse at 78% 8%, rgba(125, 183, 255, .10) 0%, transparent 55%),
+        radial-gradient(ellipse at 15% 92%, rgba(255, 209, 102, .07) 0%, transparent 50%);
+    }
+
+    .hex-bg {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 42%;
+      height: 100%;
+      z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='49'%3E%3Cpolygon points='28,1 53,14.5 53,34.5 28,48 3,34.5 3,14.5' fill='none' stroke='%23d4d8cc' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 56px 49px;
+      mask-image: linear-gradient(to left, rgba(0, 0, 0, .28), transparent);
+      pointer-events: none;
+    }
+
+    .slide-inner {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: var(--pad);
+    }
+
+    /* ── TWO-ZONE LAYOUT ── */
+    .zone-header {
+      flex-shrink: 0;
+      padding-bottom: var(--gap-sm);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--gap-sm)
+    }
+
+    .zone-main {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      align-items: stretch;
+      min-height: 0
+    }
+
+    .zone-takeaway {
+      flex-shrink: 0;
+      margin-top: var(--gap-sm);
+      border-top: 1px solid rgba(255, 209, 102, .22);
+      padding-top: var(--gap-sm);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--gap)
+    }
+
+    .tk-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      white-space: nowrap;
+      flex-shrink: 0
+    }
+
+    .tk-text {
+      font-size: var(--body-size);
+      color: var(--text-muted);
+      line-height: 1.4
+    }
+
+    .tk-text strong {
+      color: var(--text)
+    }
+
+    /* ── TYPOGRAPHY ── */
+    .display {
+      font-family: 'DM Serif Display', serif;
+      font-size: var(--title-size);
+      line-height: 1.04;
+      letter-spacing: -.02em
+    }
+
+    .display em {
+      font-style: italic;
+      color: var(--gold)
+    }
+
+    h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: var(--h2-size);
+      line-height: 1.1;
+      font-weight: 400
+    }
+
+    .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-dim)
+    }
+
+    .lead {
+      font-size: var(--body-size);
+      color: var(--text-muted);
+      margin-top: .28rem;
+      line-height: 1.45
+    }
+
+    .lead strong {
+      color: var(--text)
+    }
+
+    /* ── REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .45s ease, transform .45s ease;
+      transition-delay: var(--d, 0ms)
+    }
+
+    .slide.active .reveal {
+      opacity: 1;
+      transform: none
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .reveal {
+        transition: none;
+        opacity: 1;
+        transform: none
+      }
+
+      html {
+        scroll-behavior: auto
+      }
+    }
+
+    /* ── SHARED ── */
+    .slide-header {
+      display: flex;
+      align-items: baseline;
+      gap: var(--gap);
+      margin-bottom: .25rem
+    }
+
+    .slide-num {
+      color: var(--gold)
+    }
+
+    .rule-gold {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, var(--gold), transparent);
+      margin: var(--gap-sm) 0
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .28rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      padding: .16rem .52rem;
+      border-radius: 3px
+    }
+
+    .b-done {
+      background: rgba(101, 240, 167, .12);
+      color: var(--green);
+      border: 1px solid rgba(101, 240, 167, .35)
+    }
+
+    .b-plan {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px dashed var(--border)
+    }
+
+    .b-pend {
+      background: rgba(125, 183, 255, .10);
+      color: var(--blue);
+      border: 1px solid rgba(125, 183, 255, .30)
+    }
+
+    .b-meas {
+      background: rgba(101, 240, 167, .12);
+      color: var(--green);
+      border: 1px solid rgba(101, 240, 167, .35)
+    }
+
+    .sdot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0
+    }
+
+    .pulse {
+      animation: pulse 1.4s ease-in-out infinite
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .2
+      }
+    }
+
+    /* ── SLIDE 1 TITLE ── */
+    #s1 .slide-inner {
+      justify-content: flex-end;
+      padding-bottom: clamp(2.2rem, 7vh, 5rem)
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: clamp(.5rem, 2vh, 1.1rem)
+    }
+
+    .eyebrow-line {
+      width: clamp(24px, 4vw, 56px);
+      height: 2px;
+      background: var(--gold);
+      flex-shrink: 0
+    }
+
+    .title-block {
+      margin-bottom: clamp(.9rem, 2.8vh, 1.8rem)
+    }
+
+    .meta-row {
+      display: flex;
+      gap: clamp(1.8rem, 4.5vw, 3.5rem);
+      flex-wrap: wrap
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: .18rem
+    }
+
+    .meta-item .val {
+      font-size: var(--body-size);
+      font-weight: 500
+    }
+
+    /* ── SLIDE 2 PROBLEM DIAGRAM ── */
+    .prob-grid {
+      display: grid;
+      grid-template-columns: 1fr 70px 1fr;
+      gap: var(--gap);
+      align-items: center;
+      width: 100%;
+      height: 100%
+    }
+
+    .query-box {
+      background: rgba(125, 183, 255, .07);
+      border: 1.5px solid var(--blue);
+      border-radius: 6px;
+      padding: var(--gap);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--gap-sm)
+    }
+
+    .q-lang {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: var(--blue);
+      text-transform: uppercase
+    }
+
+    .q-text {
+      font-size: var(--body-size);
+      color: var(--text);
+      line-height: 1.55;
+      font-style: italic
+    }
+
+    .q-text em {
+      font-style: normal;
+      color: var(--gold);
+      font-weight: 600
+    }
+
+    .q-note {
+      font-size: var(--small-size);
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    .mismatch-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem
+    }
+
+    .mismatch-arrow {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      color: var(--text-dim)
+    }
+
+    .mismatch-x {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(.9rem, 1.8vw, 1.3rem);
+      font-weight: 700;
+      color: var(--red);
+      background: rgba(255, 118, 102, .11);
+      border: 1px solid rgba(255, 118, 102, .3);
+      border-radius: 50%;
+      width: 2.4em;
+      height: 2.4em;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .corpora-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap);
+      height: 100%
+    }
+
+    .corpus-box {
+      flex: 1;
+      background: rgba(255, 209, 102, .06);
+      border: 1.5px solid var(--gold-dim);
+      border-radius: 6px;
+      padding: var(--gap-sm) var(--gap);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between
+    }
+
+    .c-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: .07em
+    }
+
+    .c-size {
+      font-size: var(--body-size);
+      color: var(--text);
+      font-weight: 600
+    }
+
+    .c-fmt {
+      font-size: var(--small-size);
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    .lang-bar {
+      display: flex;
+      height: 7px;
+      border-radius: 3px;
+      overflow: hidden;
+      gap: 1px;
+      margin: .3rem 0
+    }
+
+    .lang-seg {
+      border-radius: 2px
+    }
+
+    .lang-legend {
+      display: flex;
+      gap: var(--gap-sm);
+      flex-wrap: wrap
+    }
+
+    .ll-item {
+      display: flex;
+      align-items: center;
+      gap: .22rem;
+      font-size: var(--small-size);
+      color: var(--text-muted)
+    }
+
+    .ll-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      flex-shrink: 0
+    }
+
+    /* ── SLIDE 3 BM25 ── */
+    .bm25-grid {
+      display: grid;
+      grid-template-columns: 1fr 200px;
+      gap: var(--gap);
+      width: 100%;
+      height: 100%;
+      align-items: center
+    }
+
+    .token-pairs {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+      justify-content: center
+    }
+
+    .tok-row {
+      display: grid;
+      grid-template-columns: 1fr 36px 36px 1fr;
+      align-items: center;
+      gap: var(--gap-sm)
+    }
+
+    .tok-row-hdr {
+      display: grid;
+      grid-template-columns: 1fr 36px 36px 1fr;
+      gap: var(--gap-sm);
+      margin-bottom: .2rem
+    }
+
+    .tok {
+      padding: .45rem .7rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      text-align: center;
+      line-height: 1.3
+    }
+
+    .tok.en {
+      background: rgba(125, 183, 255, .10);
+      border: 1px solid rgba(125, 183, 255, .35);
+      color: var(--blue)
+    }
+
+    .tok.de {
+      background: rgba(255, 209, 102, .10);
+      border: 1px solid rgba(255, 209, 102, .35);
+      color: var(--gold)
+    }
+
+    .tok.dim {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim)
+    }
+
+    .tok-arr {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 1.1rem
+    }
+
+    .tok-x {
+      text-align: center;
+      color: var(--red);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1rem
+    }
+
+    .score-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 118, 102, .07);
+      border: 1px solid rgba(255, 118, 102, .25);
+      border-radius: 8px;
+      padding: var(--gap);
+      gap: .45rem;
+      height: 100%
+    }
+
+    .big-f1 {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 700;
+      color: var(--red);
+      line-height: 1
+    }
+
+    .bf1-lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      color: var(--text-muted);
+      text-align: center
+    }
+
+    .bf1-note {
+      font-size: var(--small-size);
+      color: var(--text-dim);
+      text-align: center;
+      line-height: 1.4
+    }
+
+    /* ── SLIDE 4 BGE-M3 ── */
+    .model-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+      width: 100%;
+      height: 100%
+    }
+
+    .model-head {
+      display: flex;
+      align-items: center;
+      gap: var(--gap);
+      flex-wrap: wrap;
+      background: rgba(125, 183, 255, .07);
+      border: 1.5px solid rgba(125, 183, 255, .3);
+      border-radius: 8px;
+      padding: var(--gap-sm) var(--gap);
+      flex-shrink: 0
+    }
+
+    .mh-name {
+      font-size: var(--body-size);
+      font-weight: 600;
+      color: var(--blue)
+    }
+
+    .mh-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      color: var(--text-muted)
+    }
+
+    .sig-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--gap-sm);
+      flex: 1
+    }
+
+    .sig-card {
+      border-radius: 6px;
+      padding: var(--gap);
+      display: flex;
+      flex-direction: column;
+      gap: .45rem
+    }
+
+    .sig-card.done {
+      background: rgba(125, 183, 255, .08);
+      border: 1.5px solid var(--blue)
+    }
+
+    .sig-card.plan {
+      background: var(--surface);
+      border: 1.5px dashed var(--border)
+    }
+
+    .sig-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .sig-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      font-weight: 700
+    }
+
+    .sig-card.done .sig-title {
+      color: var(--blue)
+    }
+
+    .sig-card.plan .sig-title {
+      color: var(--text-muted)
+    }
+
+    .sig-dim {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(1.3rem, 2.8vw, 2.2rem);
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1
+    }
+
+    .sig-card.plan .sig-dim {
+      color: var(--text-dim)
+    }
+
+    .sig-desc {
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      line-height: 1.5
+    }
+
+    .sig-card.plan .sig-desc {
+      color: var(--text-dim)
+    }
+
+    .sig-benefit {
+      font-size: var(--small-size);
+      line-height: 1.4;
+      margin-top: auto
+    }
+
+    .sig-card.done .sig-benefit {
+      color: var(--green)
+    }
+
+    .sig-card.plan .sig-benefit {
+      color: var(--text-dim)
+    }
+
+    .model-foot {
+      display: flex;
+      gap: var(--gap);
+      flex-wrap: wrap;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: var(--gap-sm) var(--gap);
+      flex-shrink: 0
+    }
+
+    .mf-chip {
+      display: flex;
+      align-items: center;
+      gap: .32rem;
+      font-size: var(--small-size);
+      color: var(--text-muted)
+    }
+
+    .mf-chip .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      flex-shrink: 0
+    }
+
+    /* ── SLIDE 5 PIPELINE ── */
+    .pipe-wrap {
+      display: flex;
+      gap: var(--gap);
+      width: 100%;
+      height: 100%
+    }
+
+    .pipe-svg-col {
+      flex: 1;
+      overflow: hidden
+    }
+
+    .pipe-stats-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+      width: clamp(120px, 15vw, 165px);
+      flex-shrink: 0;
+      justify-content: center
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--gold);
+      border-radius: 4px;
+      padding: var(--gap-sm)
+    }
+
+    .stat-box .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(1.3rem, 2.3vw, 1.9rem);
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1
+    }
+
+    .stat-box .desc {
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      margin-top: .18rem;
+      line-height: 1.3
+    }
+
+    /* ── SLIDE 6 RESULTS ── */
+    .results-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      width: 100%;
+      height: 100%
+    }
+
+    .r-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: var(--gap);
+      overflow: hidden
+    }
+
+    .r-panel.r-bm25 {
+      border-color: rgba(255, 118, 102, .4)
+    }
+
+    .r-panel.r-bgem3 {
+      border-color: rgba(125, 183, 255, .4)
+    }
+
+    .r-sysname {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      font-weight: 700
+    }
+
+    .r-sysname.red {
+      color: var(--red)
+    }
+
+    .r-sysname.blue {
+      color: var(--blue)
+    }
+
+    .r-sysname.dim {
+      color: var(--text-dim)
+    }
+
+    .r-sub {
+      font-size: var(--small-size);
+      color: var(--text-dim)
+    }
+
+    .r-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(2.8rem, 6.5vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1
+    }
+
+    .r-score.red {
+      color: var(--red)
+    }
+
+    .r-score.blue {
+      color: var(--blue)
+    }
+
+    .r-score.pend {
+      color: var(--text-dim);
+      font-size: clamp(1.2rem, 2.8vw, 2.2rem)
+    }
+
+    .r-bar-bg {
+      height: 10px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 5px;
+      overflow: hidden
+    }
+
+    .r-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1.1s cubic-bezier(.22, 1, .36, 1);
+      transition-delay: .35s
+    }
+
+    .slide:not(.active) .r-bar-fill {
+      width: 0% !important
+    }
+
+    .r-bar-fill.red {
+      background: linear-gradient(to right, rgba(255, 118, 102, .3), var(--red))
+    }
+
+    .r-bar-fill.pend {
+      background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 7px, transparent 7px, transparent 14px);
+      width: 100% !important;
+      transition: none
+    }
+
+    .r-ctx {
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin-top: auto
+    }
+
+    .r-ctx em {
+      font-style: normal;
+      color: var(--gold)
+    }
+
+    .r-ctx span {
+      color: var(--text-dim)
+    }
+
+    /* ── SLIDE 7 ROADMAP ── */
+    .road-wrap {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0
+    }
+
+    .road-wrap svg {
+      flex: 1
+    }
+
+    .road-next {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: 6px;
+      padding: var(--gap-sm) var(--gap);
+      margin-bottom: var(--gap-sm);
+      font-size: var(--body-size);
+      color: var(--text);
+      font-weight: 600
+    }
+
+    /* ── SLIDE 8 WALKTHROUGH ── */
+    .walk-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap);
+      width: 100%;
+      height: 100%
+    }
+
+    .walk-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm)
+    }
+
+    .walk-hdr {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      font-weight: 700;
+      padding-bottom: var(--gap-sm);
+      border-bottom: 2px solid;
+      flex-shrink: 0
+    }
+
+    .walk-hdr.fail {
+      color: var(--red);
+      border-color: rgba(255, 118, 102, .5)
+    }
+
+    .walk-hdr.pass {
+      color: var(--green);
+      border-color: rgba(101, 240, 167, .5)
+    }
+
+    .walk-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: var(--gap-sm) var(--gap);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: .28rem
+    }
+
+    .walk-step.fail {
+      border-color: rgba(255, 118, 102, .28)
+    }
+
+    .walk-step.pass {
+      border-color: rgba(101, 240, 167, .28)
+    }
+
+    .ws-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase
+    }
+
+    .walk-step.fail .ws-label {
+      color: var(--red)
+    }
+
+    .walk-step.pass .ws-label {
+      color: var(--green)
+    }
+
+    .ws-body {
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      line-height: 1.5
+    }
+
+    .ws-body em {
+      font-style: normal;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace
+    }
+
+    .walk-result {
+      padding: var(--gap-sm) var(--gap);
+      border-radius: 5px;
+      flex-shrink: 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--mono-size);
+      font-weight: 700;
+      text-align: center
+    }
+
+    .wr-fail {
+      background: rgba(255, 118, 102, .10);
+      color: var(--red);
+      border: 1px solid rgba(255, 118, 102, .3)
+    }
+
+    .wr-pass {
+      background: rgba(101, 240, 167, .10);
+      color: var(--green);
+      border: 1px solid rgba(101, 240, 167, .3)
+    }
+
+    .qchip {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: var(--gap-sm) var(--gap);
+      font-size: var(--small-size);
+      color: var(--text-muted);
+      line-height: 1.5;
+      flex-shrink: 0
+    }
+
+    .qchip em {
+      font-style: normal;
+      color: var(--gold);
+      font-weight: 600
+    }
+
+    /* ── PROGRESS ── */
+    #progress {
+      position: fixed;
+      right: clamp(.6rem, 1.4vw, 1.2rem);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      z-index: 200
+    }
+
+    .pdot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      cursor: pointer;
+      transition: background .3s, transform .3s;
+      border: none
+    }
+
+    .pdot.active {
+      background: var(--gold);
+      transform: scale(1.6)
+    }
+
+    #hint {
+      position: fixed;
+      bottom: clamp(.6rem, 2vh, 1.1rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: var(--small-size);
+      color: var(--text-dim);
+      z-index: 200;
+      transition: opacity 1s ease
+    }
+
+    #hint.gone {
+      opacity: 0;
+      pointer-events: none
+    }
+
+    .kk {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--text-dim);
+      border-radius: 2px;
+      font-size: 9px
+    }
+
+    @media(max-height:640px) {
+      :root {
+        --pad: .9rem;
+        --gap: .55rem;
+        --h2-size: clamp(1.1rem, 3vw, 1.7rem)
+      }
+
+      #hint,
+      #progress {
+        display: none
+      }
+    }
+
+    @media(max-width:640px) {
+
+      .prob-grid,
+      .bm25-grid,
+      .walk-wrap,
+      .results-wrap,
+      .sig-cards {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <nav id="progress" aria-label="Slide navigation"></nav>
+  <div id="hint" aria-hidden="true">
+    <span class="kk">↑</span><span class="kk">↓</span> navigate &nbsp;·&nbsp; <span class="kk">→</span> next
+  </div>
+  <main>
+
+    <!-- ════════════════════ SLIDE 1 — TITLE ════════════════════ -->
+    <section class="slide" id="s1" aria-label="Title">
+      <div class="hex-bg" aria-hidden="true"></div>
+      <div class="slide-inner">
+        <div class="eyebrow reveal" style="--d:80ms">
+          <div class="eyebrow-line"></div>
+          <span class="label">LUH Agentic AI Course</span>
+        </div>
+        <div class="title-block reveal" style="--d:180ms">
+          <div class="display"><em>LLM Agentic Legal Information Retrieval</em></div>
+        </div>
+        <div class="rule-gold reveal" style="--d:300ms"></div>
+        <div class="meta-row reveal" style="--d:400ms">
+          <div class="meta-item"><span class="label">Status</span><span class="val">Week 3 Progress</span></div>
+          <div class="meta-item"><span class="label">Date</span><span class="val">May 22, 2026</span></div>
+          <div class="meta-item"><span class="label">Team</span><span class="val">The Orchestrators</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 2 — THE PROBLEM ════════════════════ -->
+    <section class="slide" id="s2" aria-label="The Problem">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">01/07</span>
+            <h2>The Problem</h2>
+          </div>
+          <p class="lead">Given an <strong>English</strong> legal query, find citations in <strong>German / French /
+              Italian</strong> law corpora — zero shared vocabulary.</p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="prob-grid">
+            <div class="query-box">
+              <div class="q-lang">English Query</div>
+              <div class="q-text">"…three-month extension of <em>pre-trial detention</em> under Art. 221 Abs. 1 lit. b
+                StPO (<em>risk of collusion</em>)…"</div>
+              <div class="q-note">10 val queries</div>
+            </div>
+            <div class="mismatch-col">
+              <div class="mismatch-arrow">→</div>
+              <div class="mismatch-x">✕</div>
+              <div
+                style="font-family:'JetBrains Mono',monospace;font-size:var(--small-size);color:var(--text-dim);text-align:center;margin-top:.3rem;line-height:1.4">
+                token<br>gap</div>
+            </div>
+            <div class="corpora-stack">
+              <div class="corpus-box">
+                <div>
+                  <div class="c-name">Federal Laws</div>
+                  <div class="c-size">175,933 passages</div>
+                </div>
+                <div>
+                  <div class="lang-bar">
+                    <div class="lang-seg" style="background:#7db7ff;width:99%;height:100%"></div>
+                    <div class="lang-seg" style="background:#ffd166;width:1%;height:100%"></div>
+                  </div>
+                  <div class="lang-legend">
+                    <div class="ll-item">
+                      <div class="ll-dot" style="background:#7db7ff"></div>DE 99%
+                    </div>
+                    <div class="ll-item">
+                      <div class="ll-dot" style="background:#ffd166"></div>FR/IT 1%
+                    </div>
+                  </div>
+                </div>
+                <div class="c-fmt">Art. X BOOK format</div>
+              </div>
+              <div class="corpus-box">
+                <div>
+                  <div class="c-name">Court Decisions</div>
+                  <div class="c-size">2,400,000 passages</div>
+                </div>
+                <div>
+                  <div class="lang-bar">
+                    <div class="lang-seg" style="background:#7db7ff;width:61%;height:100%"></div>
+                    <div class="lang-seg" style="background:#ffd166;width:32%;height:100%"></div>
+                    <div class="lang-seg" style="background:#65f0a7;width:6%;height:100%"></div>
+                  </div>
+                  <div class="lang-legend">
+                    <div class="ll-item">
+                      <div class="ll-dot" style="background:#7db7ff"></div>DE 61%
+                    </div>
+                    <div class="ll-item">
+                      <div class="ll-dot" style="background:#ffd166"></div>FR 32%
+                    </div>
+                    <div class="ll-item">
+                      <div class="ll-dot" style="background:#65f0a7"></div>IT 6%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text">English tokens never appear in German/French/Italian text</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 3 — BM25 FAILS ════════════════════ -->
+    <section class="slide" id="s3" aria-label="Why BM25 Fails">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">02/07</span>
+            <h2>Why BM25 Fails</h2>
+          </div>
+          <p class="lead">BM25 needs shared tokens between query and document. Every English legal concept maps to a
+            different German word.</p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="bm25-grid">
+            <div class="token-pairs">
+              <div class="tok-row-hdr">
+                <div
+                  style="font-family:'JetBrains Mono',monospace;font-size:var(--small-size);color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em">
+                  English</div>
+                <div></div>
+                <div></div>
+                <div
+                  style="font-family:'JetBrains Mono',monospace;font-size:var(--small-size);color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em">
+                  German Corpus</div>
+              </div>
+              <div class="tok-row">
+                <div class="tok en">"detention"</div>
+                <div class="tok-arr">→</div>
+                <div class="tok-x">✕</div>
+                <div class="tok de">"Haft"</div>
+              </div>
+              <div class="tok-row">
+                <div class="tok en">"contract formation"</div>
+                <div class="tok-arr">→</div>
+                <div class="tok-x">✕</div>
+                <div class="tok de">"Vertragsabschluss"</div>
+              </div>
+              <div class="tok-row">
+                <div class="tok en">"collusion risk"</div>
+                <div class="tok-arr">→</div>
+                <div class="tok-x">✕</div>
+                <div class="tok de">"Kollusionsgefahr"</div>
+              </div>
+              <div class="tok-row">
+                <div class="tok en">"Art. 221 StPO"</div>
+                <div class="tok-arr">→</div>
+                <div class="tok-x">✕</div>
+                <div class="tok en">metadata field, not body text</div>
+              </div>
+            </div>
+            <div class="score-panel">
+              <div
+                style="font-family:'JetBrains Mono',monospace;font-size:var(--small-size);color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em">
+                Macro F1</div>
+              <div class="big-f1">0.00</div>
+              <div class="bf1-lbl">all k values · k = 2, 3, 5, 10</div>
+              <div style="height:1px;width:100%;background:rgba(255,118,102,.18);margin:.4rem 0"></div>
+              <div class="bf1-note">body-text-only BM25 · val set n=10</div>
+              <div style="height:1px;width:100%;background:rgba(255,255,255,.07);margin:.35rem 0"></div>
+              <div
+                style="font-family:'JetBrains Mono',monospace;font-size:var(--small-size);color:var(--text-dim);margin-bottom:.3rem;text-align:left;width:100%">
+                val_001 example:</div>
+              <div style="font-size:var(--small-size);text-align:left;width:100%;line-height:1.7">
+                <div style="color:var(--text-muted)">Query wants: <span style="color:var(--blue)">detention / collusion
+                    / StPO</span></div>
+                <div style="color:var(--text-muted)">BM25 returns: <span style="color:var(--red)">climate law, AVO,
+                    221.434</span></div>
+                <div style="color:var(--text-muted)">Gold: <span style="color:var(--green)">Art. 221 Abs. 1 StPO</span>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;color:var(--red);margin-top:.2rem">→ no overlap</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text"><strong>BM25 returns irrelevant matches → Macro F1 = 0.0000.</strong> No zero-shot
+            cross-lingual method on body text can succeed here — dense embedding is necessary.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 4 — BGE-M3 MODEL ════════════════════ -->
+    <section class="slide" id="s4" aria-label="BGE-M3 Model">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">03/07</span>
+            <h2>Our Model: BGE-M3</h2>
+          </div>
+          <p class="lead">Dense retrieval implemented and evaluated on laws corpus. 0.6B-parameter multilingual encoder.
+            Sparse and ColBERT channels are planned for week 4.</p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="model-wrap">
+            <div class="model-head">
+              <span class="mh-name">BAAI/bge-m3</span>
+              <span class="mh-meta">0.6B params · 100+ languages · T4 GPU compatible</span>
+              <span class="badge b-done">✓ Deployed to Kaggle</span>
+            </div>
+            <div class="sig-cards">
+              <div class="sig-card done">
+                <div class="sig-top"><span class="sig-title">Dense</span><span class="badge b-done">✓ Implemented</span>
+                </div>
+                <div class="sig-dim">Meaning match</div>
+                <div class="sig-desc">Turns the English query into a meaning-vector, then finds German law passages with
+                  similar meaning.</div>
+                <div class="sig-benefit">✓ "detention" ≈ "Haft" in embedding space — cross-lingual by design</div>
+              </div>
+              <div class="sig-card plan">
+                <div class="sig-top"><span class="sig-title">Sparse</span><span class="badge b-plan">Planned — Wk
+                    3</span></div>
+                <div class="sig-dim">—</div>
+                <div class="sig-desc">Sparse retrieval would help preserve exact legal clues, like article numbers.
+                </div>
+                <div class="sig-benefit">Boosts recall for legal terms with exact-match signals</div>
+              </div>
+              <div class="sig-card plan">
+                <div class="sig-top"><span class="sig-title">ColBERT</span><span class="badge b-plan">Planned — Wk
+                    3</span></div>
+                <div class="sig-dim">—</div>
+                <div class="sig-desc">ColBERT computes relevance between a query and a document. It would compare
+                  important words more carefully after retrieval.</div>
+                <div class="sig-benefit">Fine-grained token alignment across languages</div>
+              </div>
+            </div>
+            <div class="model-foot">
+              <div class="mf-chip">
+                <div class="dot"></div>175K laws embedded
+              </div>
+              <div class="mf-chip">
+                <div class="dot"></div>2.4M court passages
+              </div>
+              <div class="mf-chip">
+                <div class="dot"></div>future BGE-M3 channels planned
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text"><strong>Implemented: dense + citation anchors + RRF.</strong> BGE-M3 can also support
+            sparse and token-level retrieval; those channels are planned next.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 5 — PIPELINE ════════════════════ -->
+    <section class="slide" id="s5" aria-label="Pipeline">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">04/07</span>
+            <h2>Retrieval Pipeline</h2>
+          </div>
+          <p class="lead">Measured run: English query → exact citation anchors + BGE-M3 meaning match → law index →
+            combine candidates → top-10 citations. Courts and extra channels are planned.</p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="pipe-wrap">
+            <div class="pipe-svg-col">
+              <svg viewBox="0 0 500 310" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"
+                aria-label="Pipeline flowchart">
+                <defs>
+                  <marker id="a0" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3z" fill="#4a6387" />
+                  </marker>
+                  <marker id="ag" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3z" fill="#7a5c1e" />
+                  </marker>
+                  <marker id="ag2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3z" fill="#7a5c1e" />
+                  </marker>
+                </defs>
+                <!-- Query -->
+                <rect x="150" y="4" width="200" height="32" rx="5" fill="rgba(125,183,255,.10)" stroke="#7db7ff"
+                  stroke-width="1.5" />
+                <text x="250" y="22" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#7db7ff"
+                  font-weight="700">English Legal Query</text>
+                <text x="250" y="33" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">Art.
+                  221 Abs.1 lit.b StPO · "pre-trial detention"…</text>
+                <!-- Down arrow -->
+                <line x1="250" y1="36" x2="250" y2="54" stroke="#4a6387" stroke-width="1.5" marker-end="url(#a0)" />
+                <!-- Branch left to anchor -->
+                <line x1="210" y1="46" x2="90" y2="46" stroke="#7a5c1e" stroke-width="1.2" stroke-dasharray="4,3" />
+                <line x1="90" y1="46" x2="90" y2="65" stroke="#7a5c1e" stroke-width="1.2" stroke-dasharray="4,3"
+                  marker-end="url(#ag)" />
+                <!-- Anchor box -->
+                <rect x="22" y="65" width="136" height="30" rx="4" fill="rgba(255,209,102,.07)" stroke="#7a5c1e"
+                  stroke-width="1" stroke-dasharray="3,3" />
+                <text x="90" y="80" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#ffd166"
+                  font-weight="700">Anchor Extractor</text>
+                <text x="90" y="91" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">"Art.
+                  221 StPO" → candidate</text>
+                <!-- BGE-M3 box -->
+                <rect x="150" y="55" width="200" height="36" rx="5" fill="rgba(125,183,255,.09)" stroke="#7db7ff"
+                  stroke-width="1.5" />
+                <text x="250" y="71" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#c7d4e6"
+                  font-weight="700">BGE-M3 Dense Encoder</text>
+                <text x="250" y="83" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5"
+                  fill="#94a8c4">meaning-vector</text>
+                <!-- Arrow down to split -->
+                <line x1="250" y1="91" x2="250" y2="112" stroke="#4a6387" stroke-width="1.5" />
+                <!-- Split -->
+                <line x1="250" y1="112" x2="170" y2="112" stroke="#4a6387" stroke-width="1.5" marker-end="url(#a0)" />
+                <line x1="250" y1="112" x2="330" y2="112" stroke="#4a6387" stroke-width="1.5" marker-end="url(#a0)" />
+                <!-- Law index -->
+                <rect x="95" y="120" width="150" height="40" rx="4" fill="rgba(125,183,255,.07)" stroke="#4a6387"
+                  stroke-width="1" />
+                <text x="170" y="136" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6"
+                  font-weight="700">Law index</text>
+                <text x="170" y="148" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5"
+                  fill="#94a8c4">175K · dense top-100</text>
+                <text x="170" y="157" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5"
+                  fill="#4a6387">extra channels → planned</text>
+                <!-- Court index -->
+                <rect x="255" y="120" width="150" height="40" rx="4" fill="rgba(125,183,255,.07)" stroke="#4a6387"
+                  stroke-width="1" />
+                <text x="330" y="136" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6"
+                  font-weight="700">Court index</text>
+                <text x="330" y="148" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5"
+                  fill="#94a8c4">2.4M · dense top-100</text>
+                <text x="330" y="157" text-anchor="middle" font-family="JetBrains Mono" font-size="7.5"
+                  fill="#4a6387">embedding: in progress</text>
+                <!-- Merge arrows to candidate combiner -->
+                <line x1="170" y1="160" x2="170" y2="186" stroke="#4a6387" stroke-width="1.5" />
+                <line x1="330" y1="160" x2="330" y2="186" stroke="#4a6387" stroke-width="1.5" />
+                <line x1="170" y1="186" x2="250" y2="186" stroke="#4a6387" stroke-width="1.5" />
+                <line x1="330" y1="186" x2="250" y2="186" stroke="#4a6387" stroke-width="1.5" />
+                <line x1="250" y1="186" x2="250" y2="202" stroke="#4a6387" stroke-width="1.5" marker-end="url(#a0)" />
+                <!-- Anchor into candidate combiner -->
+                <line x1="90" y1="95" x2="90" y2="192" stroke="#7a5c1e" stroke-width="1" stroke-dasharray="3,3" />
+                <line x1="90" y1="192" x2="240" y2="192" stroke="#7a5c1e" stroke-width="1" stroke-dasharray="3,3"
+                  marker-end="url(#ag2)" />
+                <!-- Candidate combiner -->
+                <rect x="148" y="200" width="204" height="35" rx="4" fill="rgba(101,240,167,.07)"
+                  stroke="rgba(101,240,167,.35)" stroke-width="1.5" />
+                <text x="250" y="215" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#65f0a7"
+                  font-weight="700">Combine ranked lists</text>
+                <text x="250" y="228" text-anchor="middle" font-family="JetBrains Mono" font-size="8"
+                  fill="#94a8c4">exact citation hits + semantic matches</text>
+                <!-- Arrow to normalizer -->
+                <line x1="250" y1="235" x2="250" y2="252" stroke="#4a6387" stroke-width="1.5" marker-end="url(#a0)" />
+                <!-- CitationNormalizer -->
+                <rect x="150" y="252" width="200" height="30" rx="4" fill="var(--surface)" stroke="#4a6387"
+                  stroke-width="1" />
+                <text x="250" y="268" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5" fill="#c7d4e6"
+                  font-weight="700">CitationNormalizer</text>
+                <text x="250" y="279" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5" fill="#94a8c4">→
+                  submission.csv → Macro F1</text>
+              </svg>
+            </div>
+            <div class="pipe-stats-col">
+              <div class="stat-box">
+                <div class="num">86</div>
+                <div class="desc">tests passing</div>
+              </div>
+              <div class="stat-box">
+                <div class="num">2</div>
+                <div class="desc">measured channels<br>anchors + laws</div>
+              </div>
+              <div class="stat-box">
+                <div class="num">top-10</div>
+                <div class="desc">best measured<br>output size</div>
+              </div>
+              <div class="stat-box">
+                <div class="num">n=10</div>
+                <div class="desc">val queries<br>Macro F1 metric</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text">Anchors guarantee exact citations (Art. 221); dense embedding looks for conceptual
+            matches. The measured laws-only run combines both, while courts and sparse/ColBERT channels are next.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 6 — RESULTS ════════════════════ -->
+    <section class="slide" id="s6" aria-label="Results">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">05/07</span>
+            <h2>Results</h2>
+          </div>
+          <p class="lead">BM25 baseline <strong>measured</strong>. BGE-M3 dense + anchors, laws-only is now
+            <strong>measured</strong>: best Macro F1 = 0.0435 at top-10.
+          </p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="results-wrap">
+            <div class="r-panel r-bm25">
+              <div>
+                <div class="r-sysname red">BM25 Baseline</div>
+                <div class="r-sub">body-text-only · measured on val set (n=10)</div>
+              </div>
+              <div class="r-score red">0.00</div>
+              <div class="r-bar-bg">
+                <div class="r-bar-fill red" style="width:2%"></div>
+              </div>
+              <span class="badge b-meas"><span class="sdot"></span> Measured</span>
+              <!-- <div class="r-ctx">Article numbers live in citation <em>metadata</em>, not body text. Even with "Art. 221
+                StPO" in the query, body-text BM25 retrieves unrelated articles because citation IDs are not indexed.
+                <span>Citation-aware BM25 would score &gt; 0.</span>
+              </div> -->
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--gap)">
+              <div class="r-panel r-bgem3" style="flex:1">
+                <div>
+                  <div class="r-sysname blue">BGE-M3 Dense · Laws only</div>
+                  <div class="r-sub">laws-only · dense search · best top-k = 10</div>
+                </div>
+                <div class="r-score blue">0.0435</div>
+                <div class="r-bar-bg">
+                  <div class="r-bar-fill"
+                    style="width:22%;background:linear-gradient(to right,rgba(37,99,235,.25),var(--blue))"></div>
+                </div>
+                <span class="badge b-meas"><span class="sdot"></span> Measured</span>
+                <div class="r-ctx">Top-k sweep: k=2 → 0.0258, k=3 → 0.0342, k=5 → 0.0398,
+                  <em>k=10 → 0.0435</em>. Precision at k=10 = 0.0733, recall = 0.0314.
+                  <span>Still low, but no longer zero.</span>
+                </div>
+              </div>
+              <div class="r-panel" style="flex:0.6">
+                <div>
+                  <div class="r-sysname dim">Target Hybrid System</div>
+                  <div class="r-sub">dense + sparse + ColBERT + courts · week 4+</div>
+                </div>
+                <div class="r-score pend" style="font-size:clamp(1rem,2.3vw,1.7rem)">Planned — not yet run</div>
+                <span class="badge b-plan">Future milestone</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text"><strong>First measured uplift:</strong> body-text BM25 moves from 0.0000 to
+            BGE-M3 laws-only at 0.0435. This is early progress, not a final leaderboard result.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 7 — ROADMAP ════════════════════ -->
+    <section class="slide" id="s7" aria-label="Roadmap">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">06/07</span>
+            <h2>Roadmap</h2>
+          </div>
+          <p class="lead">8 weeks: dense baseline → reranker → HyDE → Qwen3-8B → calibration. Each phase adds a targeted
+            Macro F1 uplift.</p>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="road-wrap">
+            <div class="road-next"><span class="badge b-pend">Next</span><span>Add courts index, then rerank top
+                candidates.</span></div>
+            <svg viewBox="0 0 780 300" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"
+              aria-label="Roadmap Gantt">
+              <!-- Column headers -->
+              <text x="0" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4"
+                letter-spacing="0.5">PHASE</text>
+              <text x="190" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk1</text>
+              <text x="265" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk2</text>
+              <text x="340" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk3</text>
+              <text x="415" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk4</text>
+              <text x="490" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk5</text>
+              <text x="565" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk6</text>
+              <text x="640" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk7</text>
+              <text x="715" y="14" font-family="JetBrains Mono" font-size="9" fill="#94a8c4">Wk8</text>
+              <line x1="0" y1="20" x2="780" y2="20" stroke="#4a6387" stroke-width="0.5" />
+              <!-- "Now" marker at Wk3 midpoint -->
+              <line x1="377" y1="20" x2="377" y2="272" stroke="rgba(255,209,102,.35)" stroke-width="1"
+                stroke-dasharray="3,3" />
+              <text x="380" y="270" font-family="JetBrains Mono" font-size="8.5" fill="#ffd166">&#x25B2; now</text>
+
+              <!-- Row 1: BGE-M3 Dense — Done -->
+              <text x="0" y="38" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6" font-weight="700">BGE-M3
+                Dense Retrieval</text>
+              <text x="0" y="50" font-family="JetBrains Mono" font-size="8.5" fill="#65f0a7">&#x2713; Measured —
+                laws-only Macro F1 0.0435</text>
+              <rect x="190" y="25" width="225" height="18" rx="3" fill="rgba(101,240,167,.13)"
+                stroke="rgba(101,240,167,.4)" stroke-width="1" />
+              <text x="302" y="37" text-anchor="middle" font-family="JetBrains Mono" font-size="8"
+                fill="#65f0a7">English &#x2192; meaning-vector &#x2192; law passages</text>
+              <line x1="0" y1="58" x2="780" y2="58" stroke="#d4d8cc" stroke-width="0.5" />
+
+              <!-- Row 2: Reranker — Wk 3 -->
+              <text x="0" y="76" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6" font-weight="700">+
+                Reranker</text>
+              <text x="0" y="88" font-family="JetBrains Mono" font-size="8.5" fill="#94a8c4">bge-reranker-v2-m3 · est.
+                +0.03–0.05</text>
+              <text x="0" y="100" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">Re-reads the query and each
+                candidate together, then reorders the top 100 results.</text>
+              <rect x="340" y="62" width="75" height="18" rx="3" fill="rgba(125,183,255,.12)"
+                stroke="rgba(125,183,255,.45)" stroke-width="1" />
+              <text x="377" y="74" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5" fill="#7db7ff"
+                font-weight="700">+0.03–0.05</text>
+              <line x1="0" y1="108" x2="780" y2="108" stroke="#d4d8cc" stroke-width="0.5" />
+
+              <!-- Row 3: HyDE — Wk 4 -->
+              <text x="0" y="126" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6" font-weight="700">+
+                HyDE</text>
+              <text x="0" y="138" font-family="JetBrains Mono" font-size="8.5" fill="#94a8c4">hypothetical document
+                embedding · est. +0.02–0.05</text>
+              <text x="0" y="150" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">Ask an LLM to write a German
+                legal paragraph for the query, retrieve laws similar to that draft.</text>
+              <rect x="415" y="112" width="75" height="18" rx="3" fill="rgba(125,183,255,.07)" stroke="#4a6387"
+                stroke-width="1" stroke-dasharray="3,3" />
+              <text x="452" y="124" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5"
+                fill="#94a8c4">+0.02–0.05</text>
+              <line x1="0" y1="158" x2="780" y2="158" stroke="#d4d8cc" stroke-width="0.5" />
+
+              <!-- Row 4: Qwen3 — Wks 5–6 -->
+              <text x="0" y="176" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6"
+                font-weight="700">Qwen3-Embedding-8B</text>
+              <text x="0" y="188" font-family="JetBrains Mono" font-size="8.5" fill="#94a8c4">SLURM cluster · est. F1
+                0.20–0.30</text>
+              <text x="0" y="200" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">A stronger multilingual
+                embedding model for the same query-to-law matching step.</text>
+              <rect x="490" y="162" width="150" height="18" rx="3" fill="rgba(255,209,102,.08)"
+                stroke="rgba(255,209,102,.35)" stroke-width="1" stroke-dasharray="3,3" />
+              <text x="565" y="174" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5" fill="#ffd166">F1
+                0.20–0.30</text>
+              <line x1="0" y1="208" x2="780" y2="208" stroke="#d4d8cc" stroke-width="0.5" />
+
+              <!-- Row 5: Calibration + Submission — Wks 7–8 -->
+              <text x="0" y="226" font-family="JetBrains Mono" font-size="10" fill="#c7d4e6"
+                font-weight="700">Calibration</text>
+              <text x="0" y="238" font-family="JetBrains Mono" font-size="8.5" fill="#94a8c4">citation count
+                · est. +0.01–0.03</text>
+              <text x="0" y="250" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">Predict how many citations
+                to return per query instead of always using a fixed top-k.</text>
+              <rect x="640" y="212" width="140" height="18" rx="3" fill="rgba(255,255,255,.03)" stroke="#4a6387"
+                stroke-width="1" stroke-dasharray="3,3" />
+              <text x="710" y="224" text-anchor="middle" font-family="JetBrains Mono" font-size="8.5"
+                fill="#94a8c4">+0.01–0.03</text>
+
+              <line x1="0" y1="260" x2="780" y2="260" stroke="#4a6387" stroke-width="0.5" />
+              <text x="0" y="275" font-family="JetBrains Mono" font-size="8" fill="#94a8c4">Dense laws-only score is
+                measured; future gains are estimates. n=10 validation queries, high variance.</text>
+            </svg>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text">Dense retrieval is the load-bearing foundation. Reranker, HyDE, and Qwen3 each add a
+            targeted layer — additive, not speculative.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════ SLIDE 8 — WALKTHROUGH ════════════════════ -->
+    <section class="slide" id="s8" aria-label="Query Walkthrough">
+      <div class="slide-inner">
+        <div class="zone-header reveal" style="--d:80ms">
+          <div class="slide-header"><span class="label slide-num">07/07</span>
+            <h2>End-to-End: val_001</h2>
+          </div>
+          <div class="qchip">"…three-month extension of <em>pre-trial detention</em> under <em>Art. 221 Abs. 1 lit. b
+              StPO</em> (risk of <em>collusion</em>)…" (English val query)</div>
+        </div>
+        <div class="zone-main reveal" style="--d:155ms">
+          <div class="walk-wrap">
+            <div class="walk-col">
+              <div class="walk-hdr fail">✕ BM25 Path</div>
+              <div class="walk-step fail">
+                <div class="ws-label">Step 1 — Token lookup</div>
+                <div class="ws-body">Scans body text for: <em>"detention"</em>, <em>"collusion"</em>,
+                  <em>"pre-trial"</em>
+                </div>
+              </div>
+              <div class="walk-step fail">
+                <div class="ws-label">Step 2 — Match attempt</div>
+                <div class="ws-body">German corpus contains: <em>"Haft"</em>, <em>"Kollusion"</em>,
+                  <em>"Untersuchungshaft"</em> — zero token overlap.
+                </div>
+              </div>
+              <div class="walk-step fail">
+                <div class="ws-label">Step 3 — Art. 221 StPO?</div>
+                <div class="ws-body">Article numbers are in <em>citation metadata</em>, not the body text BM25 indexes.
+                  Retrieves unrelated articles by matching incidental tokens — numbers, abbreviations — not legal
+                  meaning.</div>
+              </div>
+              <div class="walk-result wr-fail">F1 = 0.00 — returns irrelevant matches</div>
+            </div>
+            <div class="walk-col">
+              <div class="walk-hdr pass">✓ BGE-M3 Path (Measured Overall)</div>
+              <div class="walk-step pass">
+                <div class="ws-label">Step 1 — Anchor extraction</div>
+                <div class="ws-body">Regex finds <em>"Art. 221 StPO"</em> → injected as priority candidate before
+                  embedding.</div>
+              </div>
+              <div class="walk-step pass">
+                <div class="ws-label">Step 2 — Dense embedding</div>
+                <div class="ws-body">BGE-M3 turns the query into a meaning-vector. This lets English
+                  <em>"detention"</em> land near German <em>"Haft"</em> and related law passages.
+                </div>
+              </div>
+              <div class="walk-step pass">
+                <div class="ws-label">Step 3 — Combine candidates</div>
+                <div class="ws-body">What we hope dense retrieval
+                  adds: <em>Art. 227</em>, <em>Art. 212</em> (semantically related detention articles). Overall
+                  laws-only
+                  run now measures above zero.</div>
+              </div>
+              <div class="walk-result wr-pass">Measured overall: Macro F1 = 0.0435 at top-10</div>
+            </div>
+          </div>
+        </div>
+        <div class="zone-takeaway reveal" style="--d:270ms">
+          <span class="tk-label">Takeaway</span>
+          <span class="tk-text">Dense retrieval bridges the language gap. Anchors add precision for queries with
+            explicit article references. Together they cover both exact and conceptual matches.</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const nav = document.getElementById('progress');
+    const hint = document.getElementById('hint');
+    let hintHidden = false;
+    slides.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.className = 'pdot'; b.setAttribute('aria-label', `Slide ${i + 1}`);
+      b.addEventListener('click', () => slides[i].scrollIntoView({ behavior: 'smooth' }));
+      nav.appendChild(b);
+    });
+    const dots = Array.from(nav.querySelectorAll('.pdot'));
+    function setActive(i) {
+      slides.forEach((s, j) => s.classList.toggle('active', j === i));
+      dots.forEach((d, j) => d.classList.toggle('active', j === i));
+    }
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          setActive(slides.indexOf(e.target));
+          if (!hintHidden) { hintHidden = true; setTimeout(() => hint.classList.add('gone'), 2500); }
+        }
+      });
+    }, { threshold: .55 });
+    slides.forEach(s => io.observe(s));
+    setActive(0);
+    document.addEventListener('keydown', e => {
+      const c = slides.findIndex(s => s.classList.contains('active'));
+      if (['ArrowDown', 'ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); slides[Math.min(c + 1, slides.length - 1)].scrollIntoView({ behavior: 'smooth' }); }
+      else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(e.key)) { e.preventDefault(); slides[Math.max(c - 1, 0)].scrollIntoView({ behavior: 'smooth' }); }
+    });
+    let wl = false;
+    window.addEventListener('wheel', e => {
+      if (wl) return; wl = true;
+      const c = slides.findIndex(s => s.classList.contains('active'));
+      slides[e.deltaY > 0 ? Math.min(c + 1, slides.length - 1) : Math.max(c - 1, 0)].scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => { wl = false; }, 750);
+    }, { passive: true });
+    let ty = 0;
+    window.addEventListener('touchstart', e => { ty = e.touches[0].clientY; }, { passive: true });
+    window.addEventListener('touchend', e => {
+      const dy = ty - e.changedTouches[0].clientY;
+      if (Math.abs(dy) < 40) return;
+      const c = slides.findIndex(s => s.classList.contains('active'));
+      slides[dy > 0 ? Math.min(c + 1, slides.length - 1) : Math.max(c - 1, 0)].scrollIntoView({ behavior: 'smooth' });
+    }, { passive: true });
+  </script>
+</body>
+
+</html>

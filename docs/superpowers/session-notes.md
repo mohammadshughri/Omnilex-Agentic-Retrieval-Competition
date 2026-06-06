@@ -260,7 +260,16 @@ Model: `qwen3-30b-a3b-instruct-2507`
 | LLM predicted (parseable) | 8 (4 unparseable) | **12 (0 unparseable)** |
 | Hits | 3 | **4** |
 
-**Gate: borderline (≥5 = pursue LLM pipeline).** Next: re-run with `qwen3.5-122b-a10b`.
+**Multi-model results:**
+
+| Model | Hits | Precision | Recall | Gate |
+|---|---|---|---|---|
+| `qwen3-30b-a3b-instruct-2507` | 4 | 0.333 | 0.095 | Borderline |
+| `qwen3.5-122b-a10b` | 1 | 0.111 | 0.024 | Fail |
+
+**Gate verdict: DEPRIORITIZE LLM reasoning. Focus on retrieval improvements.**
+
+The 30B model outperformed the 122B — the larger model hallucinated 8 citations vs the smaller model's 4 hits. Neither crossed the ≥5 threshold. Note: `qwen3.5-122b-a10b` uses thinking mode (`msg.reasoning`, not `msg.content`) and requires `max_tokens=8000`. Fixed in `scripts/llm_smoke_test.py`.
 
 ---
 

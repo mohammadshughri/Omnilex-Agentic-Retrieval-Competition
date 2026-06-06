@@ -52,11 +52,14 @@ response = client.chat.completions.create(
             "content": val_001["query"],
         },
     ],
-    max_tokens=500,
+    max_tokens=8000,  # thinking models need room to reason before producing output
     temperature=0,
 )
 
-llm_output = response.choices[0].message.content.strip()
+msg = response.choices[0].message
+# Qwen3.5 thinking models put final answer in content; reasoning goes to msg.reasoning.
+# If content is still None (model ran out of tokens thinking), fall back to reasoning.
+llm_output = (msg.content or getattr(msg, "reasoning", None) or "").strip()
 print(f"LLM raw output:\n{llm_output}\n")
 
 llm_cites = [c.strip() for c in llm_output.split(";") if c.strip()]

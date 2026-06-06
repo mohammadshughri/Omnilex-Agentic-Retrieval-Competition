@@ -193,3 +193,88 @@ Requires GPU. Writes `tests/test_retrieval/test_acceptance.py` (end-to-end pipel
 ### Session 5 — Courts Evaluation (Task 13 steps 4–7)
 
 Embeds the 2.4M court decisions (4–8 hours unattended on GPU), then runs the full hybrid evaluation (laws + courts) and compares against the BM25 baseline to measure the uplift from dense retrieval.
+
+---
+
+## Session 6 — Measurement Fix + API Setup + Smoke Tests (Person A & B)
+
+**Date:** 2026-06-06
+**Reference doc:** `2026-06-06-diagnostics-and-task-split.md`
+
+---
+
+### Key Finding: Measurement Bug Fixed (Person A)
+
+`CitationNormalizer` was silently dropping 33 of 251 val.csv gold citations (13.1%) because docket-style Federal Tribunal case references (`1B_210/2023 E. 4.1`, `7B_496/2025 E. 3.2`, etc.) were not recognised. All prior evaluation metrics were computed against 218 citations — the denominator was wrong, making measured recall artificially high.
+
+**Fix:** Added `DOCKET_PATTERN` regex and `_parse_docket()` method to `CitationNormalizer`. Also updated `anchor_extractor.py` with a matching docket pattern.
+
+| | Before | After |
+|---|---|---|
+| val.csv gold citations parsed | 218 | **251** |
+| Unparseable docket citations | 33 | **0** |
+| Prior BGE-M3 F1 (0.0435) | Based on 218 gold | **Needs recomputation** |
+
+---
+
+### Corrected Baselines (Person A — `results/baselines_corrected.json`)
+
+| Metric | Value |
+|---|---|
+| val total citations | 251 (149 Art + 69 BGE + 33 docket) |
+| val mean citations/query | 25.1 |
+| Anchor-only Macro F1 | **0.0237** |
+| Oracle F1 @ k=10 | **0.6444** |
+| Oracle F1 @ k=25 | **0.7788** |
+| Oracle F1 @ k=30 | 0.7612 (drops — overshoot) |
+
+---
+
+### GWDG / KISSKI API Setup (Person B — `scripts/test_gwdg_api.py`)
+
+**Endpoint:** `https://chat-ai.academiccloud.de/v1` (OpenAI-compatible). Credentials in `.env` as `KISSKI_API_KEY`.
+
+**Available chat models:**
+
+| Model | Active Params | Recommended for |
+|---|---|---|
+| `meta-llama-3.1-8b-instruct` | 8B | Fast preprocessing |
+| `teuken-7b-instruct-research` | 7B | Native German — law text |
+| `qwen3-30b-a3b-instruct-2507` | 3B active | Current default |
+| `deepseek-r1-distill-llama-70b` | 70B | Chain-of-thought reasoning |
+| `qwen3.5-122b-a10b` | 10B active | **Recommended next** — strong + fast (MoE) |
+| `qwen3.5-397b-a17b` | 17B active | Strongest if 122b insufficient |
+| `mistral-large-3-675b-instruct-2512` | 675B | Most powerful, slowest |
+
+**Embedding decision:** `multilingual-e5-large` is NOT deployed on the API. Use it **locally** via sentence-transformers (560M, CPU-feasible, 1024-dim, cross-lingual EN→DE). The API's `e5-mistral-7b-instruct` (4096-dim) is EN-primary and weaker for German laws.
+
+---
+
+### LLM Smoke Test — val_001 (Person B — `scripts/llm_smoke_test.py`)
+
+Model: `qwen3-30b-a3b-instruct-2507`
+
+| Metric | Before fix | After fix |
+|---|---|---|
+| Gold citations (parseable) | 30 / 42 raw | **42 / 42** |
+| LLM predicted (parseable) | 8 (4 unparseable) | **12 (0 unparseable)** |
+| Hits | 3 | **4** |
+
+**Gate: borderline (≥5 = pursue LLM pipeline).** Next: re-run with `qwen3.5-122b-a10b`.
+
+---
+
+### Dense Retrieval Pipeline — Validated (Person B — `scripts/eval_dense_baseline.py`)
+
+Supports `--embedder local` (multilingual-e5-large) or `--embedder api` (e5-mistral), `--sample N`, `--no-cache`. Pipeline validated at 10/100/1000 rows. F1=0 on small samples is expected — gold citations are spread across 175K laws. Full run: ~3h local (CPU) or ~20 min on Kaggle GPU with BGE-M3.
+
+---
+
+### Decisions & What NOT to Do Yet
+
+- ✅ Normalizer fix merged — all future evaluations use 251-citation gold set
+- ✅ `multilingual-e5-large` chosen as embedding model (cross-lingual, local, no rate limits)
+- ⏳ LLM pipeline decision gated on smoke test re-run with `qwen3.5-122b-a10b`
+- ❌ Do NOT use prior 0.0435 BGE-M3 number — measured against wrong 218-citation gold set
+- ❌ Do NOT build XGBoost, HyDE, or query translation yet — need correct metrics first
+- ❌ Courts corpus embedding deferred — measure laws-only first

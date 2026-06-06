@@ -27,16 +27,14 @@ class RerankerModel(ABC):
 
 
 class BgeM3Embedder(EmbeddingModel):
-    """BGE-M3 embedding model via FlagEmbedding.
-
-    Produces dense vectors. Sparse weights are stored in
-    self.last_sparse_weights after each encode_documents call
-    with return_sparse=True.
-    """
+    """BGE-M3 embedding model via sentence-transformers (dense-only)."""
 
     def __init__(self, model_name: str = "BAAI/bge-m3", use_fp16: bool = True):
-        from FlagEmbedding import BGEM3FlagModel
-        self._model = BGEM3FlagModel(model_name, use_fp16=use_fp16)
+        from sentence_transformers import SentenceTransformer
+        import torch
+        self._model = SentenceTransformer(model_name)
+        if use_fp16 and torch.cuda.is_available():
+            self._model.half()
         self.last_sparse_weights: list[dict] | None = None
 
     @property
@@ -49,22 +47,18 @@ class BgeM3Embedder(EmbeddingModel):
         batch_size: int = 32,
         return_sparse: bool = False,
     ) -> np.ndarray:
-        output = self._model.encode(
+        vecs = self._model.encode(
             texts,
             batch_size=batch_size,
-            return_dense=True,
-            return_sparse=return_sparse,
-            return_colbert_vecs=False,
+            normalize_embeddings=True,
+            show_progress_bar=False,
         )
-        if return_sparse:
-            self.last_sparse_weights = output["lexical_weights"]
-        return np.array(output["dense_vecs"], dtype=np.float32)
+        return np.array(vecs, dtype=np.float32)
 
     def encode_queries(self, queries: list[str]) -> np.ndarray:
-        output = self._model.encode(
+        vecs = self._model.encode(
             queries,
-            return_dense=True,
-            return_sparse=False,
-            return_colbert_vecs=False,
+            normalize_embeddings=True,
+            show_progress_bar=False,
         )
-        return np.array(output["dense_vecs"], dtype=np.float32)
+        return np.array(vecs, dtype=np.float32)

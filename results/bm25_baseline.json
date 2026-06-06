@@ -1,0 +1,46 @@
+{
+  "system": "bm25_baseline",
+  "laws_only": true,
+  "results": {
+    "2": {
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "micro_precision": 0.0,
+      "micro_recall": 0.0,
+      "micro_f1": 0.0,
+      "map": 0.0,
+      "num_queries": 10
+    },
+    "3": {
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "micro_precision": 0.0,
+      "micro_recall": 0.0,
+      "micro_f1": 0.0,
+      "map": 0.0,
+      "num_queries": 10
+    },
+    "5": {
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "micro_precision": 0.0,
+      "micro_recall": 0.0,
+      "micro_f1": 0.0,
+      "map": 0.0,
+      "num_queries": 10
+    },
+    "10": {
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "micro_precision": 0.0,
+      "micro_recall": 0.0,
+      "micro_f1": 0.0,
+      "map": 0.0,
+      "num_queries": 10
+    }
+  }
+}

@@ -465,3 +465,121 @@ When complete: retrieved law articles will automatically expand to linked court 
 - ⏳ **HyDE** — next after bridge: generate German hypothetical docs from English queries
 - ❌ Do NOT tune RRF weights yet — citation bridge will change the signal mix
 - ❌ Do NOT use 3-way RRF with courts dense index — confirmed hurts performance
+
+---
+
+## Session 9 — LLM Article Prediction Paradigm Shift (Person A)
+
+**Date:** 2026-06-09
+**Notebook:** `dense-retrieval-bge-m3-laws-eval.ipynb` (Kaggle T4 GPU)
+
+---
+
+### Citation Bridge — Abandoned
+
+Built and tested the precomputed mapping (`law article → court decisions that cite it`). Result: **F1 = 0.0445 vs 0.0600 baseline — hurts performance**.
+
+Root cause: the bridge relies on accurate law article retrieval to produce meaningful court links. At current retrieval quality, the law articles feeding the bridge are mostly wrong, so the bridge expands noise rather than finding gold BGE citations.
+
+**Decision: abandon citation bridge. Focus on improving law article precision first.**
+
+---
+
+### HyDE — Tested, Minor Contribution as 3rd RRF Channel
+
+Generated hypothetical German legal documents from English queries using `qwen3-30b-a3b-instruct-2507`, then embedded the German text with BGE-M3.
+
+- HyDE alone as query replacement: **worse** than filtered dense (0.0517 vs 0.0600 at k=15)
+- HyDE as a **3rd RRF channel** (anchor + raw query + HyDE) at k=30: **F1 = 0.0678** (+13% over filtered 2-way)
+
+**Why HyDE fails as the primary signal:** val_004 diagnostic showed HyDE generated the correct article number but still got 0 TP. Embedding a full German paragraph does not match short law corpus entry style — format mismatch, not a language problem.
+
+---
+
+### Diagnostic: Why Dense Retrieval Fails on Most Queries
+
+Detailed diagnosis on val_004 (inheritance/will case, 10 gold citations):
+
+1. **All 9 law article gold citations ARE in the laws corpus** — dense retrieval simply cannot find them.
+2. **BGE citations are structurally unreachable** from `laws_de.csv` — `BGE 131 III 601 E. 3.1` is a court decision. Every query with BGE gold citations has a hard recall ceiling from laws-only retrieval.
+3. **The gap is legal reasoning, not language** — finding that val_004 requires `Art. 469 ZGB` (undue influence on a will) from a plain-English case description requires legal expertise. Dense embeddings cannot bridge this.
+
+---
+
+### LLM Article Prediction — Major Paradigm Shift
+
+**Core idea:** Instead of embedding the query and searching, ask the LLM directly: *"Given this case, which specific Swiss law articles would a court cite?"*
+
+**Iteration history:**
+
+| Version | Approach | val_004 TP | Macro F1 |
+|---|---|---|---|
+| v1 | Naive "list 20 articles" | 0 (sequential list 490–509) | — |
+| v2 | Chain-of-thought: identify issues first, then articles | 4–5 TP | **0.0926** |
+| v3 | v2 + French→German abbreviation fix (LAI→IVG, LACI→AVIG) | varies | 0.0882 combined |
+| Ensemble | Union of 3 runs | 1 TP, 25 articles | 0.0781 |
+
+**Best result: LLM v2 + anchor union = Macro F1 = 0.0926 (+37% over filtered dense 0.0600)**
+
+Per-query breakdown at best run:
+
+| Query | Gold | LLM_TP | F1 |
+|---|---|---|---|
+| val_001 | 42 | 2 | 0.111 |
+| val_002 | 36 | 0 | 0.000 |
+| val_003 | 47 | 3 | 0.102 |
+| val_004 | 10 | 5 | 0.323 |
+| val_005 | 11 | 1 | 0.062 |
+| val_006 | 18 | 2 | 0.174 |
+| val_007 | 19 | 0 | 0.000 |
+| val_008 | 29 | 1 | 0.048 |
+| val_009 | 14 | 1 | 0.053 |
+| val_010 | 25 | 1 | 0.054 |
+
+**Important bugs found and fixed:**
+
+- **French abbreviations:** KISSKI API returns LAI (French) instead of IVG (German), LACI instead of AVIG. Fix: `FR_TO_DE` dict applied to LLM output before regex extraction. val_002 went from 0 predictions to valid IVG/AVIG articles.
+- **Parent citation mismatch:** Gold has `Art. 467 ZGB` (no Abs.), LLM predicts `Art. 467 Abs. 1 ZGB`. Fix: strip Abs. from predicted articles and add parent form to prediction set.
+
+**Key negative findings:**
+
+- **Ensemble (3-run union) hurts:** val_007 ballooned to 72 articles with 0 TP → F1=0.000. More predictions = more FP = lower precision = lower F1. Do NOT ensemble.
+- **Dense retrieval on top of LLM hurts:** Combined LLM+anchor+dense = 0.0882 (< 0.0926 LLM+anchor alone) because dense adds noise without enough new TPs. The LLM is also non-deterministic at temperature=0.1 — val_004 ranged from 5 TP to 0 TP between runs.
+
+---
+
+### Updated Scoreboard
+
+| Method | Best F1 | Notes |
+|---|---|---|
+| Anchor-only | 0.0237 | Regex extraction only |
+| BGE-M3 dense laws k=25 | 0.0216 | Below anchor baseline |
+| Hybrid anchor+dense k=10 | 0.0332 | 2-way RRF |
+| Filtered anchor+dense k=15 | 0.0600 | LLM code prediction + RRF |
+| 3-way RRF (anchor+raw+HyDE) k=30 | 0.0678 | HyDE as 3rd channel |
+| **LLM article prediction + anchor** | **0.0926** | **Current best** |
+| Oracle k=25 | 0.7788 | Ceiling |
+| Leaderboard top | 0.3590 | Target |
+
+---
+
+### Open Problems
+
+1. **LLM stochasticity** — val_004 varies 0–5 TP between runs at temperature=0.1. Fix in progress: `predict_articles_v4` with `temperature=0.0` and max 10 articles, "one citation per line" output format.
+2. **BGE/docket citations unreachable from laws corpus** — 102/251 gold citations are court decisions. Laws corpus alone caps recall at ~59%.
+3. **val_007 consistently 0 TP** — LLM predicts wrong articles across all runs. Needs diagnosis.
+4. **Low recall on high-citation queries** — val_001 (42 gold), val_002 (36), val_003 (47) have too many gold citations for LLM to exhaust.
+
+---
+
+### Decisions & Next Steps
+
+- ✅ LLM article prediction validated — paradigm shift confirmed, best F1 = 0.0926
+- ✅ Citation bridge abandoned — hurts performance at current retrieval quality
+- ✅ Dense retrieval confirmed as noise source — LLM+anchor alone beats LLM+anchor+dense
+- ✅ Ensemble approach confirmed harmful — over-prediction hurts F1
+- ⏳ **`predict_articles_v4` in progress** — temperature=0, max 10 articles, stable output
+- ⏳ **Diagnose val_007** — 0 TP despite 11+ predictions across all runs
+- ❌ Do NOT use ensemble (union of N runs) — inflates FP, hurts F1
+- ❌ Do NOT add dense retrieval on top of LLM predictions — adds noise, no net gain
+- ❌ Do NOT use citation bridge yet — needs accurate law retrieval first

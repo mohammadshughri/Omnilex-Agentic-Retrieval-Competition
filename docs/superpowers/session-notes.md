@@ -368,6 +368,100 @@ Per-query at k=10:
 
 - ✅ Hybrid RRF pipeline validated — current best is 0.0332
 - ✅ Anchor extraction ceiling confirmed — no further gains without courts corpus
-- ⏳ **Courts corpus embedding in progress** — 2.4M rows on Kaggle T4 (~4–5h)
+- ✅ Courts corpus embedded — 2.4M rows, 3.2h on T4
 - ❌ Do NOT further tune anchor regex — queries don't contain explicit BGE/docket citations
 - ❌ Do NOT deprioritize courts corpus — 102/251 gold citations are unreachable without it
+
+---
+
+## Session 8 — LLM Metadata Filtering + Citation Bridge (Person A)
+
+**Date:** 2026-06-09
+**Notebook:** `dense-retrieval-bge-m3-laws-eval.ipynb` (Kaggle T4 GPU)
+**Reference:** Public solution analysis — [PrudhvirajuChekuri/swiss-legal-information-retrieval](https://github.com/PrudhvirajuChekuri/swiss-legal-information-retrieval)
+
+---
+
+### Key Discovery: Top Solution Architecture
+
+Reverse-engineered the approach behind the leaderboard top score (0.3590). The critical insight is **filter first, search less**:
+
+1. **LLM predicts Swiss law codes** (ZGB, OR, StGB, StPO...) from the English query before any vector search
+2. **Filter corpus** to only matching articles — reduces laws search space by ~96%
+3. **Citation bridge** — precomputed mapping `law article → court decisions that cite it`, bypasses dense search on 2.4M courts entirely
+4. **HyDE** — generate hypothetical German documents from English queries for better cross-lingual embeddings
+5. **Three separate pipelines** — laws, BGE, docket — each tuned independently
+
+---
+
+### Courts Dense Retrieval — Post-Mortem
+
+Embedded full courts corpus (2.4M rows, 3.2h on T4). Result: **0 hits** in top-100 for val_001 gold BGE/docket citations.
+
+Root cause confirmed: dense retrieval finds *topically similar* court cases but not the *specific cases cited* in gold. With 2.4M documents, gold citations rank at 10,000+ — unreachable at any practical k.
+
+**Decision: do NOT use courts dense retrieval. Use citation bridge instead.**
+
+---
+
+### LLM Metadata Filtering — Results
+
+Used KISSKI `qwen3-30b-a3b-instruct-2507` to predict relevant Swiss law codes per query, then filtered laws corpus before dense search.
+
+**Evaluation results (anchor + filtered dense via RRF):**
+
+| k | Filtered F1 | 2-Way F1 | Delta |
+|---|---|---|---|
+| 10 | 0.0485 | 0.0332 | +0.0153 |
+| **15** | **0.0600** | 0.0289 | **+0.0311** |
+| 20 | 0.0529 | 0.0325 | +0.0204 |
+| 25 | 0.0502 | 0.0294 | +0.0208 |
+
+**Best: k=15, F1 = 0.0600 (+81% over previous best of 0.0332)**
+
+Per-query at k=15 — val_002 and val_009 jumped from 0 TP to 3 TP and 2 TP respectively after filtering.
+
+| Query | TP | F1 |
+|---|---|---|
+| val_001 | 3 | 0.105 |
+| val_002 | 3 | 0.118 |
+| val_006 | 2 | 0.121 |
+| val_007 | 2 | 0.118 |
+| val_009 | 2 | 0.138 |
+| val_003–005, 008, 010 | 0 | 0.000 |
+
+---
+
+### Updated Scoreboard
+
+| Method | Best F1 | Notes |
+|---|---|---|
+| Anchor-only | 0.0237 | Regex extraction only |
+| BGE-M3 dense, laws k=25 | 0.0216 | Below anchor baseline |
+| Hybrid anchor+dense k=10 | 0.0332 | 2-way RRF |
+| **Filtered anchor+dense k=15** | **0.0600** | LLM code prediction + RRF — current best |
+| Oracle k=25 | 0.7788 | Ceiling |
+| Leaderboard top | 0.3590 | Target |
+
+---
+
+### Citation Bridge — In Progress
+
+Building precomputed mapping: `normalized Art. citation → [court decisions that cite it]`.
+
+- Source: `court_considerations.csv` (2.4M rows)
+- Method: regex extract Art. patterns from each court decision text
+- Estimated build time: ~30 min one-time, cached to `citation_bridge.json`
+
+When complete: retrieved law articles will automatically expand to linked court decisions via the bridge, covering the 102/251 BGE/docket gold citations currently unreachable by dense retrieval.
+
+---
+
+### Decisions & Next Steps
+
+- ✅ LLM metadata filtering validated — +81% F1 improvement, new best = 0.0600
+- ✅ Courts dense retrieval abandoned — 0 hits confirmed dead end
+- ⏳ **Citation bridge build in progress** — expected to push F1 toward 0.10+
+- ⏳ **HyDE** — next after bridge: generate German hypothetical docs from English queries
+- ❌ Do NOT tune RRF weights yet — citation bridge will change the signal mix
+- ❌ Do NOT use 3-way RRF with courts dense index — confirmed hurts performance

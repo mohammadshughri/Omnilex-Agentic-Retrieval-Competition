@@ -287,3 +287,87 @@ Supports `--embedder local` (multilingual-e5-large) or `--embedder api` (e5-mist
 - ❌ Do NOT use prior 0.0435 BGE-M3 number — measured against wrong 218-citation gold set
 - ❌ Do NOT build XGBoost, HyDE, or query translation yet — need correct metrics first
 - ❌ Courts corpus embedding deferred — measure laws-only first
+
+---
+
+## Session 7 — BGE-M3 Laws Eval + Hybrid RRF (Person A)
+
+**Date:** 2026-06-09
+**Notebook:** `dense-retrieval-bge-m3-laws-eval.ipynb` (Kaggle T4 GPU)
+
+---
+
+### BGE-M3 Dense Retrieval — Laws Only (Full Run)
+
+Embedded all 175,933 laws with `BAAI/bge-m3` on Kaggle T4 GPU (~18 min). Evaluated on val.csv with corrected 251-citation gold set.
+
+| k | Macro F1 | Mean Precision | Mean Recall |
+|---|---|---|---|
+| 10 | 0.0120 | 0.0300 | 0.0075 |
+| 15 | 0.0183 | 0.0325 | 0.0128 |
+| 20 | 0.0197 | 0.0287 | 0.0152 |
+| 25 | **0.0216** | 0.0274 | 0.0180 |
+
+**Key finding:** Dense-only (laws) is BELOW anchor-only baseline (0.0237). Root cause: 102/251 gold citations are BGE/docket court decisions — absent from `laws_de.csv`. 8/10 queries retrieved zero true positives.
+
+---
+
+### Anchor Extraction Analysis
+
+Ran `extract_citation_anchors()` on all 10 val queries. Results:
+
+| Query | Anchors found |
+|---|---|
+| val_001 | 1 (`Art. 221 Abs. 1 StPO`) |
+| val_006 | 3 (`Art. 364 OR`, `Art. 248 OR`, `Art. 41 OR`) |
+| val_007 | 2 (`Art. 934 ZGB`, `Art. 936 ZGB`) |
+| val_002–005, 008–010 | 0 |
+
+**Finding:** Most queries describe legal scenarios in plain English without citing specific articles or case numbers. Anchor extraction has reached its ceiling at 3/10 queries. BGE/docket citations in the gold set come from court decisions that ruled on similar cases — they are not mentioned in the query text itself.
+
+---
+
+### Hybrid Retrieval: Anchor + Dense via RRF
+
+Combined anchor channel and dense (laws) channel using Reciprocal Rank Fusion (RRF_K=60, DENSE_FETCH=100).
+
+| k | Hybrid F1 | Dense F1 | Delta |
+|---|---|---|---|
+| 10 | **0.0332** | 0.0120 | +0.0212 |
+| 15 | 0.0289 | 0.0183 | +0.0106 |
+| 20 | 0.0325 | 0.0197 | +0.0128 |
+| 25 | 0.0294 | 0.0216 | +0.0078 |
+
+**Best: k=10, Hybrid F1 = 0.0332 (+40% over anchor-only baseline of 0.0237)**
+
+Per-query at k=10:
+
+| Query | Gold | Anchors | TP | F1 |
+|---|---|---|---|---|
+| val_001 | 42 | 1 | 2 | 0.077 |
+| val_002 | 36 | 0 | 1 | 0.043 |
+| val_006 | 18 | 3 | 2 | 0.143 |
+| val_007 | 19 | 2 | 1 | 0.069 |
+| val_003–005, 008–010 | — | 0 | 0 | 0.000 |
+
+---
+
+### Updated Scoreboard
+
+| Method | Macro F1 | Notes |
+|---|---|---|
+| Anchor-only | 0.0237 | Regex extraction only |
+| BGE-M3 dense, laws k=25 | 0.0216 | Below anchor baseline |
+| **Hybrid anchor+dense k=10** | **0.0332** | Current best |
+| Oracle k=25 | 0.7788 | Ceiling |
+| Leaderboard top | 0.3590 | Target |
+
+---
+
+### Decisions & Next Steps
+
+- ✅ Hybrid RRF pipeline validated — current best is 0.0332
+- ✅ Anchor extraction ceiling confirmed — no further gains without courts corpus
+- ⏳ **Courts corpus embedding in progress** — 2.4M rows on Kaggle T4 (~4–5h)
+- ❌ Do NOT further tune anchor regex — queries don't contain explicit BGE/docket citations
+- ❌ Do NOT deprioritize courts corpus — 102/251 gold citations are unreachable without it

@@ -583,3 +583,120 @@ Per-query breakdown at best run:
 - ❌ Do NOT use ensemble (union of N runs) — inflates FP, hurts F1
 - ❌ Do NOT add dense retrieval on top of LLM predictions — adds noise, no net gain
 - ❌ Do NOT use citation bridge yet — needs accurate law retrieval first
+
+---
+
+## Session 10 — KISSKI Model Comparison + Anchor Fix (Person A)
+
+**Date:** 2026-06-13 / 2026-06-14
+**Notebook:** `omnilex-llm-retrieval-v2.ipynb` (Kaggle T4 GPU)
+
+---
+
+### Anchor Fix: Strict Abs. Filter
+
+Discovered that val_007 anchors (`Art. 934 ZGB`, `Art. 936 ZGB`) are NOT in the gold set — gold only contains `Art. 934 Abs. 1 ZGB` and `Art. 934 Abs. 2 ZGB`. Plain parent citations without `Abs.` are false positives.
+
+**Fix:** Only keep anchors that contain `Abs.` — these are specific enough to match gold format.
+
+```python
+anchor_lists_strict = [
+    [a for a in anchors if 'Abs.' in a]
+    for anchors in anchor_lists
+]
+```
+
+Effect:
+- val_007: 2 false-positive anchors removed ✓
+- val_006: `Art. 41 OR` dropped, `Art. 364 Abs. 1 OR` and `Art. 248 Abs. 1 OR` kept ✓
+- val_001: `Art. 221 Abs. 1 StPO` kept ✓
+
+---
+
+### KISSKI Model Survey (updated 2026-06-14)
+
+Full model list available at `https://chat-ai.academiccloud.de/v1`:
+
+`apertus-70b-instruct-2509`, `deepseek-r1-distill-llama-70b`, `devstral-2-123b-instruct-2512`, `gemma-4-31b-it`, `glm-4.7`, `internvl3.5-30b-a3b`, `medgemma-27b-it`, `meta-llama-3.1-8b-instruct`, `mistral-large-3-675b-instruct-2512`, `openai-gpt-oss-120b`, `qwen3-30b-a3b-instruct-2507`, `qwen3.5-122b-a10b`, `qwen3.5-397b-a17b`, `teuken-7b-instruct-research`, `llama-3.1-sauerkrautlm-70b-instruct`
+
+---
+
+### Model Comparison — predict_articles_v4
+
+All models used the same `V4_PROMPT` (temp=0, max 10 articles, law code metadata) + strict anchors on all 10 val queries.
+
+| Model | Macro F1 | Delta vs qwen3-30b |
+|---|---|---|
+| apertus-70b-instruct-2509 | 0.0832 | -0.0049 |
+| qwen3-30b-a3b-instruct-2507 | 0.0881 | baseline |
+| teuken-7b-instruct-research | 0.0954 | +0.0073 |
+| **llama-3.1-sauerkrautlm-70b-instruct** | **0.1225** | **+0.0344** |
+
+**Winner: `llama-3.1-sauerkrautlm-70b-instruct`** — German fine-tune of LLaMA 70B, best F1 by a wide margin.
+
+**Surprising finding: apertus-70b (Swiss-native, ETH/EPFL/CSCS) underperforms sauerkraut-70b.** Being trained on Swiss multilingual corpus does not translate to better citation prediction. SauerkrautLM's German legal text fine-tuning is more relevant for this task.
+
+---
+
+### Combination Approaches — All Hurt F1
+
+| Approach | F1 | Delta vs sauerkraut standalone |
+|---|---|---|
+| Sauerkraut standalone | 0.1225 | — |
+| + Code-prior boosting (top-2 citations per predicted law code) | 0.0920 | -0.0305 |
+| Sauerkraut generate → qwen3-30b filter | 0.0551 | -0.0674 |
+| qwen3-30b generate → sauerkraut filter | 0.0557 | -0.0668 |
+| RRF fusion: sauerkraut + qwen3-30b | 0.0917 | -0.0308 |
+
+**Pattern:** Every combination tried hurts F1. Adding a second model or filtering step inflates false positives without sufficient recall gain. Sauerkraut standalone is the optimal configuration.
+
+---
+
+### Top Leaderboard Architecture Analysis
+
+Analyzed `bettercallagent_legal_rag_qwen3_fast_johny.py` (public leaderboard top, F1=0.3590):
+
+**Their pipeline:**
+1. `Qwen3-Embedding-8B` (8B param embedder — 14x larger than our BGE-M3)
+2. Retrieve top-500 → RRF fuse to 300
+3. `Qwen3-4B` as **reranker** (scores candidates, does NOT generate from scratch)
+4. Keep top-15 above `threshold=9.0`, `fallback-k=3`, `fallback-min-votes=2`
+
+**Key architectural difference:** They use LLM as a *reranker* over a large retrieved candidate pool. We use LLM as a *generator* from scratch. Their approach requires a much stronger embedding model to produce quality candidates first. LLM-as-filter with our current retrieval quality does not replicate their gains (confirmed by experiments above).
+
+---
+
+### Updated Scoreboard
+
+| Method | Best F1 | Notes |
+|---|---|---|
+| Anchor-only | 0.0237 | Regex extraction only |
+| BGE-M3 dense laws k=25 | 0.0216 | Below anchor baseline |
+| Hybrid anchor+dense k=10 | 0.0332 | 2-way RRF |
+| Filtered anchor+dense k=15 | 0.0600 | LLM code prediction + RRF |
+| 3-way RRF (anchor+raw+HyDE) k=30 | 0.0678 | HyDE as 3rd channel |
+| LLM v2 + anchor (qwen3-30b) | 0.0926 | Previous best |
+| **sauerkraut-70b v4 + strict anchors** | **0.1225** | **Current best** |
+| Oracle k=25 | 0.7788 | Ceiling |
+| Leaderboard top | 0.3590 | Target |
+
+---
+
+### Decisions & Next Steps
+
+- ✅ `llama-3.1-sauerkrautlm-70b-instruct` confirmed as best model — use for all future runs and submission
+- ✅ Strict anchor filter (`Abs.` required) — removes val_007 false positives, applied to all future runs
+- ✅ LLM-as-filter approach abandoned — too aggressive, destroys recall
+- ✅ Code-prior boosting abandoned — generic priors add noise, not signal
+- ✅ RRF fusion with second model abandoned — dilutes sauerkraut signal
+- ⏳ **Submission pending** — sauerkraut-70b on test.csv (40 queries), rate limit issues addressed with retry logic + 2s sleep between calls
+- ⏳ **LoRA fine-tuning** — Kaggle T4 unstable with vanilla PEFT/TRL (CUDA illegal memory access, training hangs). Next attempt: **Unsloth** (2-5x faster, 50% less VRAM) or Google Colab A100
+- ❌ Do NOT retry apertus-70b — confirmed worse than sauerkraut despite Swiss-native training
+- ❌ Do NOT combine sauerkraut with any second model — standalone is optimal
+- ❌ Do NOT use plain parent citations as anchors (no `Abs.`) — val_007 false positives confirmed
+
+### Untested KISSKI Models Worth Trying Next
+
+- `qwen3.5-397b-a17b` — largest available MoE (17B active params), may have stronger legal knowledge
+- `mistral-large-3-675b-instruct-2512` — most powerful available, slowest
+- `deepseek-r1-distill-llama-70b` — reasoning model, chain-of-thought may help for legal citation prediction

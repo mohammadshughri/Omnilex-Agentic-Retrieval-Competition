@@ -586,7 +586,109 @@ Per-query breakdown at best run:
 
 ---
 
-## Session 10 — KISSKI Model Comparison + Anchor Fix (Person A)
+## Session 10 — Push A: v4 determinism + calibration sweep (2026-06-11)
+
+**Date:** 2026-06-11
+**Plan:** `docs/superpowers/plans/2026-06-10-llm-v4-and-bge-pipeline.md` Tasks 2–4
+**Kernel version pushed:** v8 (after 7 debug pushes to fix K_VALUES guard, KISSKI secret, import re)
+**Push A result:** GATE FAILED — v4 regressed vs v2 baseline
+
+---
+
+### What was built
+
+Added three task cells to `notebooks/bge_m3_push/03_dense_retrieval_bge_m3.ipynb`:
+- `predict_articles_v4`: temperature=0.0, ISSUES+CITATIONS chain-of-thought, no law-code filtering
+- `expand_parents`: adds Abs.-stripped parent for every Abs. prediction (Session 9 fix)
+- Truncation sweep at N=[5,8,10,12,15,20,25]
+- val_007 diagnostic (book overlap + near-miss analysis)
+
+Also fixed 7 unguarded cells that caused K_VALUES NameError (cells 35, 37, 38, 39, 41, 42 + bridge builder cell 30).
+
+---
+
+### Push A Results
+
+#### Determinism (Task 2 gate)
+- Run lengths: [25, 25, 25] — model returns 25 articles every time
+- **Identical across runs: False** — model is NOT deterministic at temperature=0.0
+- All 3 runs on val_004: 0 TP each (val_004 gold has 10 citations, all missed)
+- Plan verdict: "record variance, proceed anyway — KISSKI backend nondeterminism out of our control"
+
+#### Full val evaluation (Task 2)
+| Query | Gold | Pred | TP | F1 |
+|---|---|---|---|---|
+| val_001 | 42 | 27 | 3 | 0.087 |
+| val_002 | 36 | 49 | 3 | 0.071 |
+| val_003 | 47 | 50 | 2 | 0.041 |
+| val_004 | 10 | 26 | 0 | 0.000 |
+| val_005 | 11 | 50 | 0 | 0.000 |
+| val_006 | 18 | 27 | 2 | 0.089 |
+| val_007 | 19 | 26 | 0 | 0.000 |
+| val_008 | 29 | 27 | 1 | 0.036 |
+| val_009 | 14 | 25 | 0 | 0.000 |
+| val_010 | 25 | 25 | 0 | 0.000 |
+
+**v4 (n=25) + anchor: Macro F1 = 0.0323** (vs v2 baseline 0.0926)
+
+#### Truncation sweep (Task 3 gate)
+| N | Macro F1 | Mean pred |
+|---|---|---|
+| 5 | 0.0453 | 7.4 |
+| 8 | 0.0412 | 11.3 |
+| 10 | 0.0389 | 13.9 |
+| 12 | 0.0369 | 16.5 |
+| 15 | 0.0404 | 20.4 |
+| 20 | 0.0359 | 26.9 |
+| 25 | 0.0323 | 33.2 |
+
+**Best N=5, Macro F1=0.0453 — GATE FAILED (< 0.0926). Entire curve is below baseline.**
+
+---
+
+### val_007 Diagnostic (Task 4)
+
+**Query summary:** Heirship claim to a vintage pocket chronometer. Ms. Barnes died 2010, allegedly donated watch to Mr. Collins in 2006 (only photocopy of deed). Mr. Collins sold it 2010 via Ms. Ortega to Eastbridge LLC, then to Alpine Trading AG.
+
+**Gold citations (19):** Art. 933, 934, 940 ZGB (possession/good-faith acquisition), Art. 8, 16 ZGB (burden of proof), Art. 197, 641 ZGB (ownership), Art. 245 OR (donations), Art. 292 StGB (document offence), Art. 100 IPRG + Art. 98 IPRG (private international law), Art. 3, 15 OR, Art. 16 ZGB, plus 4 BGE court decisions.
+
+**v4 predictions (24):** Art. 221–240 ZGB (donation/gift chapter), Art. 934, 936 ZGB (from anchors), Art. 100–101 ZPO. Book overlap with gold: only ZGB. Zero IPRG, zero BGE.
+
+**Hypothesis for 0 TP:** The LLM correctly identified the gift/donation legal dimension (Art. 221–240 ZGB) but the gold focuses on *property recovery* (Art. 933–940 ZGB) and *private international law* (IPRG). The model reframed "was the donation valid?" instead of "can the heir recover the chattel in a cross-border context?" without law-code filtering to constrain the search space to the relevant books. The 2 anchors (Art. 934, 936 ZGB) provided the only correct ZGB hits, but with expand_parents they didn't match the gold's Abs.-qualified forms exactly.
+
+---
+
+### Root Cause of v4 Regression
+
+v2/v3 pipeline = **two-step**: (1) `predict_law_codes` → 3–5 relevant law books, (2) predict articles *within those books only*. The code constraint stops the model from wandering into adjacent areas.
+
+v4 = **one-step**: predict articles from all Swiss law directly. Without the law-book constraint, predictions drift: for val_007 the model explored ZGB donation law (Art. 221–240) and ZPO; for val_004 it returned 0 TP entirely (gold is inheritance law, Art. 469–475 ZGB, but model didn't hit them despite being in that neighbourhood for another query).
+
+The confidence-ordering instruction ("most confident to least") did not help — the model's confident predictions are simply wrong books/articles.
+
+---
+
+### Fix Required Before Continuing
+
+v4 must accept `predicted_codes` (from the already-running `predict_law_codes` cell) and restrict article candidates to those books, as v3 did. This preserves:
+- temperature=0 determinism (still fails due to backend, but effort is correct)
+- confidence ordering (quality improvement goal)
+- law-code filtering (the actual source of v2/v3's score)
+
+Alternatively, incorporate law-code prediction directly into the v4 system prompt (single LLM call, two-step instruction: "first identify relevant law codes, then list articles from those codes only").
+
+---
+
+### Status
+- Task 1: COMPLETE (kernel snapshotted, GPU disabled, dense cells guarded)
+- Task 2: GATE FAILED — v4 F1 = 0.0323, non-deterministic; root cause identified (missing code filter)
+- Task 3: GATE FAILED — best sweep F1 = 0.0453 < 0.0926
+- Task 4: COMPLETE — val_007 hypothesis documented above
+- Tasks 5, 6, 7: Blocked pending Task 2/3 fix
+
+---
+
+## Session 11 — KISSKI Model Comparison + Anchor Fix (Person A)
 
 **Date:** 2026-06-13 / 2026-06-14
 **Notebook:** `omnilex-llm-retrieval-v2.ipynb` (Kaggle T4 GPU)

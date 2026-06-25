@@ -1,0 +1,13 @@
+{
+  "id": "moeghri/dense-retrieval-bge-m3-laws-eval",
+  "title": "Dense Retrieval BGE-M3 Laws Eval",
+  "code_file": "03_dense_retrieval_bge_m3.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": ["moeghri/omnilex-retrieval-code"],
+  "competition_sources": ["llm-agentic-legal-information-retrieval"],
+  "kernel_sources": []
+}

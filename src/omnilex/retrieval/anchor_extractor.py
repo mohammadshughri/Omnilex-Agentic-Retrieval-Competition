@@ -32,11 +32,16 @@ _BGE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+# Match docket-style case numbers: "1B_210/2023 E. 4.1"
+_DOCKET_PATTERN = re.compile(
+    r"\d{1,2}[A-Z]_\d+/\d{4}(?:\s+E\.\s*\d+(?:\.\d+)*[a-z]?)?",
+)
+
 
 def extract_citation_anchors(query: str) -> list[str]:
     """Extract and normalize citation anchors from a query string.
 
-    Finds explicit Art./BGE patterns, normalizes via CitationNormalizer,
+    Finds explicit Art./BGE/docket patterns, normalizes via CitationNormalizer,
     and returns deduplicated canonical IDs.
     """
     normalizer = _get_normalizer()
@@ -46,6 +51,9 @@ def extract_citation_anchors(query: str) -> list[str]:
         raw_matches.append(m.group(0).strip())
 
     for m in _BGE_PATTERN.finditer(query):
+        raw_matches.append(m.group(0).strip())
+
+    for m in _DOCKET_PATTERN.finditer(query):
         raw_matches.append(m.group(0).strip())
 
     return normalizer.canonicalize_list(raw_matches)

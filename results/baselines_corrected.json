@@ -1,0 +1,126 @@
+{
+  "normalizer_version": "with_docket_support",
+  "val_queries": 10,
+  "val_total_citations": 251,
+  "val_mean_citations": 25.1,
+  "citation_type_totals": {
+    "Art": 149,
+    "BGE": 69,
+    "docket": 33
+  },
+  "anchor_only_macro_f1": 0.0237,
+  "oracle_f1_at_k": {
+    "5": 0.3946,
+    "10": 0.6444,
+    "15": 0.7433,
+    "20": 0.7783,
+    "25": 0.7788,
+    "30": 0.7612
+  },
+  "per_query": [
+    {
+      "query_id": "val_001",
+      "raw_count": 42,
+      "canonical_count": 42,
+      "art": 19,
+      "bge": 11,
+      "docket": 12
+    },
+    {
+      "query_id": "val_002",
+      "raw_count": 36,
+      "canonical_count": 36,
+      "art": 20,
+      "bge": 12,
+      "docket": 4
+    },
+    {
+      "query_id": "val_003",
+      "raw_count": 47,
+      "canonical_count": 47,
+      "art": 24,
+      "bge": 16,
+      "docket": 7
+    },
+    {
+      "query_id": "val_004",
+      "raw_count": 10,
+      "canonical_count": 10,
+      "art": 9,
+      "bge": 1,
+      "docket": 0
+    },
+    {
+      "query_id": "val_005",
+      "raw_count": 11,
+      "canonical_count": 11,
+      "art": 6,
+      "bge": 5,
+      "docket": 0
+    },
+    {
+      "query_id": "val_006",
+      "raw_count": 18,
+      "canonical_count": 18,
+      "art": 11,
+      "bge": 7,
+      "docket": 0
+    },
+    {
+      "query_id": "val_007",
+      "raw_count": 19,
+      "canonical_count": 19,
+      "art": 15,
+      "bge": 4,
+      "docket": 0
+    },
+    {
+      "query_id": "val_008",
+      "raw_count": 29,
+      "canonical_count": 29,
+      "art": 20,
+      "bge": 5,
+      "docket": 4
+    },
+    {
+      "query_id": "val_009",
+      "raw_count": 14,
+      "canonical_count": 14,
+      "art": 11,
+      "bge": 1,
+      "docket": 2
+    },
+    {
+      "query_id": "val_010",
+      "raw_count": 25,
+      "canonical_count": 25,
+      "art": 14,
+      "bge": 7,
+      "docket": 4
+    }
+  ],
+  "dense_e5mistral_laws_sample10": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 10
+  },
+  "dense_e5mistral_laws_sample100": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 100
+  },
+  "dense_e5mistral_laws_sample1000": {
+    "macro_f1_by_k": {
+      "10": 0.0,
+      "25": 0.0
+    },
+    "model": "e5-mistral-7b-instruct",
+    "corpus_size": 1000
+  }
+}
